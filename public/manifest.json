@@ -1,0 +1,21 @@
+{
+  "short_name": "HookZen",
+  "name": "HookZen - AI Viral Score Calculator",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#fffdf9",
+  "theme_color": "#d97706",
+  "display": "standalone",
+  "description": "AI Viral Score Calculator for YouTube Shorts, TikTok & Instagram Reels"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "HookZen",
+  "description": "Short-Form Video Viral Analyzer for YouTube Shorts, TikTok & Instagram Reels.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
