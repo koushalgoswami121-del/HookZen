@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://hookzen.com/sitemap.xml
+Sitemap: https://hookzen.me/sitemap.xml

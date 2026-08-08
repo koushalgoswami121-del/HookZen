@@ -11,6 +11,17 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Force HTTPS in production — trust proxy headers from Railway/Render/Cloudflare
+  app.set('trust proxy', 1);
+  if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+      if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(301, `https://${req.headers.host}${req.url}`);
+      }
+      next();
+    });
+  }
+
   // Initialize re-usable Polar SDK client
   const polar = new Polar({
     accessToken: process.env.POLAR_ACCESS_TOKEN || '',
@@ -50,7 +61,7 @@ async function startServer() {
         case 'subscription.updated': {
           const { userId, email, planType } = extractUserFromPolarEvent(event);
           console.log(`[Polar Webhook SUCCESS] ${event.type} for user:`, { userId, email, planType });
-          
+
           if (userId || email) {
             await updateUserPremiumStatus({ userId, email }, true, planType);
           } else {
@@ -65,7 +76,7 @@ async function startServer() {
         case 'subscription.expired': {
           const { userId, email } = extractUserFromPolarEvent(event);
           console.log(`[Polar Webhook CANCELED] ${event.type} for user:`, { userId, email });
-          
+
           if (userId || email) {
             await updateUserPremiumStatus({ userId, email }, false, 'free');
           } else {

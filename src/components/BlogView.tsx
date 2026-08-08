@@ -64,12 +64,12 @@ export const BlogView: React.FC<BlogViewProps> = ({ onBackToApp, initialSlug }) 
           'name': 'HookZen',
           'logo': {
             '@type': 'ImageObject',
-            'url': 'https://hookzen.com/favicon.svg',
+            'url': 'https://hookzen.me/favicon.svg',
           },
         },
         'mainEntityOfPage': {
           '@type': 'WebPage',
-          '@id': `https://hookzen.com/blog/${activeArticle.slug}`,
+          '@id': `https://hookzen.me/blog/${activeArticle.slug}`,
         },
       });
       document.head.appendChild(script);
