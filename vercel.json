@@ -1,0 +1,14 @@
+{
+    "buildCommand": "vite build",
+    "outputDirectory": "dist",
+    "rewrites": [
+        {
+            "source": "/__/:path*",
+            "destination": "https://ai-studio-applet-webapp-20a1f.firebaseapp.com/__/:path*"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
