@@ -22,6 +22,36 @@ async function startServer() {
     });
   }
 
+  // Proxy Firebase auth handler routes (/__/auth/*, /__/firebase/*)
+  // Required so authDomain can be set to hookzen.me — Google shows
+  // "to continue to hookzen.me" instead of the raw firebaseapp.com domain.
+  // Firebase Hosting normally serves these; we forward them transparently.
+  const FIREBASE_HOSTING_ORIGIN = 'https://ai-studio-applet-webapp-20a1f.firebaseapp.com';
+  app.use('/__/', async (req: express.Request, res: express.Response) => {
+    try {
+      const targetUrl = `${FIREBASE_HOSTING_ORIGIN}/__/${req.url.replace(/^\//, '')}`;
+      const upstream = await fetch(targetUrl, {
+        method: req.method,
+        headers: {
+          'accept': req.headers['accept'] || '*/*',
+          'accept-language': (req.headers['accept-language'] as string) || 'en',
+          'user-agent': (req.headers['user-agent'] as string) || 'hookzen-proxy/1.0',
+        },
+        redirect: 'follow',
+      });
+      const contentType = upstream.headers.get('content-type') || 'text/html; charset=utf-8';
+      res.setHeader('Content-Type', contentType);
+      // Allow the auth handler to post messages across origins
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.status(upstream.status);
+      const body = await upstream.text();
+      res.send(body);
+    } catch (err: any) {
+      console.error('[Firebase Auth Proxy] Error:', err.message);
+      res.status(502).json({ error: 'Firebase auth proxy error', detail: err.message });
+    }
+  });
+
   // Initialize re-usable Polar SDK client
   const polar = new Polar({
     accessToken: process.env.POLAR_ACCESS_TOKEN || '',
