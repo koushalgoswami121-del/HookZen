@@ -29,7 +29,6 @@ import {
   subscribeToAuth,
   loginWithGoogle,
   logout,
-  handleRedirectResult,
   saveUserHistoryItemToFirestore,
   fetchUserHistoryFromFirestore,
   clearUserHistoryInFirestore,
@@ -90,11 +89,6 @@ export default function App() {
     setFreemiumState(updated);
     setIsAccountSettingsOpen(false);
   };
-
-  // Process Google redirect result on app mount (completes sign-in after redirect flow)
-  useEffect(() => {
-    handleRedirectResult().catch(console.warn);
-  }, []);
 
   // Initial IP credit sync on boot
   useEffect(() => {
