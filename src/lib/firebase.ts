@@ -27,9 +27,17 @@ import {
 import firebaseConfigData from '../../firebase-applet-config.json';
 import { ViralScoreResult } from '../types';
 
+// Always use Firebase's own default authDomain for the sign-in popup.
+//
+// WHY: Using a custom authDomain (www.hookzen.me) requires Vercel to proxy
+// the /__/auth/handler route from Firebase Hosting. That proxy breaks the
+// cross-frame postMessage that delivers the auth result back to the app —
+// the sign-in popup completes but the result is silently dropped, leaving
+// the user logged out. Firebase's own firebaseapp.com domain has no such
+// limitation and works reliably on all hosting platforms.
 const firebaseConfig = {
   apiKey: firebaseConfigData.apiKey,
-  authDomain: firebaseConfigData.authDomain,
+  authDomain: `${firebaseConfigData.projectId}.firebaseapp.com`,
   projectId: firebaseConfigData.projectId,
   storageBucket: firebaseConfigData.storageBucket,
   messagingSenderId: firebaseConfigData.messagingSenderId,
@@ -42,7 +50,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Initialize Auth with explicit browserLocalPersistence
 export const auth = getAuth(app);
 try {
-  setPersistence(auth, browserLocalPersistence).catch(() => {});
+  setPersistence(auth, browserLocalPersistence).catch(() => { });
 } catch {
   // ignore
 }
@@ -116,7 +124,7 @@ export async function getPublicIp(): Promise<string> {
       const data = await res.json();
       if (data && data.ip) {
         cachedIpAddress = data.ip;
-        try { sessionStorage.setItem('hkz_user_ip', data.ip); } catch (e) {}
+        try { sessionStorage.setItem('hkz_user_ip', data.ip); } catch (e) { }
         return data.ip;
       }
     }
@@ -130,7 +138,7 @@ export async function getPublicIp(): Promise<string> {
         const data = await res.json();
         if (data && data.ipAddress) {
           cachedIpAddress = data.ipAddress;
-          try { sessionStorage.setItem('hkz_user_ip', data.ipAddress); } catch (e) {}
+          try { sessionStorage.setItem('hkz_user_ip', data.ipAddress); } catch (e) { }
           return data.ipAddress;
         }
       }
@@ -372,7 +380,7 @@ export const deleteAccountPermanently = async (currentUser: User): Promise<void>
   const userId = currentUser.uid;
   // Wipe database documents first
   await deleteUserDataFromFirestore(userId);
-  
+
   // Try deleting Firebase Auth user account
   try {
     await deleteUser(currentUser);
