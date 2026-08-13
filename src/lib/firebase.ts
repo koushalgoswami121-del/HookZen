@@ -2,7 +2,8 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   setPersistence,
@@ -205,13 +206,26 @@ export const saveIpUsageToFirestore = async (
   }
 };
 
-// Google Sign In Helper
-export const loginWithGoogle = async (): Promise<User | null> => {
+// Google Sign In — uses redirect flow (no popup).
+// Page navigates to Google, user picks account, Google redirects back to hookzen.me.
+// Call handleRedirectResult() on app mount to complete the sign-in.
+export const loginWithGoogle = async (): Promise<void> => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    if (result.user) {
-      // Save or update user profile document in Firestore asynchronously without blocking sign-in completion
+    await signInWithRedirect(auth, googleProvider);
+    // Page will navigate away — no code runs after this line
+  } catch (error: any) {
+    console.error('Error initiating Google Sign-In redirect:', error);
+    throw error;
+  }
+};
+
+// Call once on app mount to complete sign-in after Google redirects back to hookzen.me
+export const handleRedirectResult = async (): Promise<User | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
       const user = result.user;
+      // Save/update user profile in Firestore (non-blocking)
       (async () => {
         try {
           const userRef = doc(db, 'users', user.uid);
@@ -227,22 +241,15 @@ export const loginWithGoogle = async (): Promise<User | null> => {
             { merge: true }
           );
         } catch (fsErr) {
-          console.warn('Non-blocking user profile firestore sync warning:', fsErr);
+          console.warn('User profile Firestore sync warning:', fsErr);
         }
       })();
+      return user;
     }
-    return result.user;
+    return null;
   } catch (error: any) {
-    if (
-      error?.code === 'auth/popup-closed-by-user' ||
-      error?.code === 'auth/cancelled-popup-request' ||
-      error?.code === 'auth/popup-blocked'
-    ) {
-      console.log('Google Sign-In popup closed or cancelled by user.');
-      return null;
-    }
-    console.error('Error signing in with Google:', error);
-    throw error;
+    console.error('Error handling Google redirect result:', error);
+    return null;
   }
 };
 
