@@ -479,7 +479,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <div className="mt-3 bg-amber-50 rounded-lg p-2.5 border border-amber-200 flex items-start gap-2 shadow-sm">
               <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-[10px] text-amber-900 leading-tight font-medium">
-                <strong>Important:</strong> This score is an AI estimate based on content characteristics (hook strength, pacing, clarity). It is not a guarantee of views or virality. Actual performance can vary significantly based on audience, distribution, and timing.
+                <strong>Important:</strong> This score is an AI estimate based on content characteristics. It is not a guarantee of views or virality. Actual performance can vary significantly based on audience, distribution, and timing.
               </p>
             </div>
           </div>
@@ -533,14 +533,14 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 CONFIDENCE: {result.confidence || 'MEDIUM'}
               </div>
               <div className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${detailed.letterGrade === 'A+'
-                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-400'
-                  : detailed.letterGrade === 'A'
-                    ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                    : detailed.letterGrade === 'B'
-                      ? 'bg-blue-100 text-blue-900 border-blue-300'
-                      : detailed.letterGrade === 'C'
-                        ? 'bg-amber-100 text-amber-900 border-amber-300'
-                        : 'bg-rose-100 text-rose-900 border-rose-300'
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-400'
+                : detailed.letterGrade === 'A'
+                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                  : detailed.letterGrade === 'B'
+                    ? 'bg-blue-100 text-blue-900 border-blue-300'
+                    : detailed.letterGrade === 'C'
+                      ? 'bg-amber-100 text-amber-900 border-amber-300'
+                      : 'bg-rose-100 text-rose-900 border-rose-300'
                 }`}>
                 GRADE: {detailed.letterGrade}
               </div>
