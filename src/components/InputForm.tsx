@@ -92,8 +92,8 @@ export const InputForm: React.FC<InputFormProps> = ({
   const [title, setTitle] = useState('');
   const [transcript, setTranscript] = useState('');
   const [industry, setIndustry] = useState<IndustryType>('tech');
-  const [followerCount, setFollowerCount] = useState<number | null>(null);
-  const [highestViews, setHighestViews] = useState<number | null>(null);
+  const [followerCount, setFollowerCount] = useState<string>('');
+  const [highestViews, setHighestViews] = useState<string>('');
   const [targetPlatform, setTargetPlatform] = useState<PlatformType>('all');
   const [language, setLanguage] = useState<LanguageType>('en');
 
@@ -116,6 +116,25 @@ export const InputForm: React.FC<InputFormProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const parseMetricString = (val: string): number => {
+    if (!val) return 0;
+    const cleaned = val.toLowerCase().replace(/,/g, '').trim();
+
+    let multiplier = 1;
+    if (cleaned.includes('m') || cleaned.includes('million')) {
+      multiplier = 1000000;
+    } else if (cleaned.includes('k') || cleaned.includes('thousand')) {
+      multiplier = 1000;
+    } else if (cleaned.includes('b') || cleaned.includes('billion')) {
+      multiplier = 1000000000;
+    }
+
+    // Extract just the numbers/decimals using regex
+    const numericPart = cleaned.replace(/[^0-9.]/g, '');
+    const num = parseFloat(numericPart);
+    return isNaN(num) ? 0 : Math.round(num * multiplier);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() && !transcript.trim()) return;
@@ -134,8 +153,8 @@ export const InputForm: React.FC<InputFormProps> = ({
       imageDataUrl: imagePreviewUrl,
       transcript,
       industry,
-      followerCount: Math.max(0, followerCount || 0),
-      highestViews: Math.max(0, highestViews || 0),
+      followerCount: Math.max(0, parseMetricString(followerCount)),
+      highestViews: Math.max(0, parseMetricString(highestViews)),
       targetPlatform,
       language,
     });
@@ -411,11 +430,10 @@ export const InputForm: React.FC<InputFormProps> = ({
             </label>
             <div className="relative">
               <input
-                type="number"
-                min="0"
-                value={followerCount === null ? '' : followerCount}
-                onChange={(e) => setFollowerCount(parseInt(e.target.value))}
-                placeholder="e.g. 10000"
+                type="text"
+                value={followerCount}
+                onChange={(e) => setFollowerCount(e.target.value)}
+                placeholder="e.g. 1M or 500k"
                 className="w-full rounded-xl border border-blue-200 bg-blue-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-blue-300 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/60 shadow-2xs transition-all"
                 required
               />
@@ -431,11 +449,10 @@ export const InputForm: React.FC<InputFormProps> = ({
             </label>
             <div className="relative">
               <input
-                type="number"
-                min="0"
-                value={highestViews === null ? '' : highestViews}
-                onChange={(e) => setHighestViews(parseInt(e.target.value))}
-                placeholder="e.g. 500000"
+                type="text"
+                value={highestViews}
+                onChange={(e) => setHighestViews(e.target.value)}
+                placeholder="e.g. 1 million"
                 className="w-full rounded-xl border border-rose-200 bg-rose-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-rose-300 focus:border-rose-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200/60 shadow-2xs transition-all"
                 required
               />
