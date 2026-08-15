@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BlogPost, BLOG_CATEGORIES, getAllBlogPosts, saveCustomBlogPost, deleteBlogPost } from '../data/blogData';
-import { Lock, Plus, Trash2, Edit3, Copy, Check, X, Sparkles, BookOpen, Eye, Code, ShieldCheck } from 'lucide-react';
+import { Lock, Plus, Trash2, Edit3, Copy, Check, X, Sparkles, BookOpen, Code, ShieldCheck, MessageSquareText, Star, Users, Search } from 'lucide-react';
+import { fetchFeedbacksFromFirestore, FeedbackRecord, fetchAllUsersFromFirestore, saveUserProfileToFirestore, CloudUserProfile } from '../lib/firebase';
 
 interface AdminBlogModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface AdminBlogModalProps {
   onPostsUpdated: () => void;
 }
 
-const DEFAULT_PASSCODE = 'hookzen2026';
+const DEFAULT_PASSCODE = 'hookoushal23';
 
 export const AdminBlogModal: React.FC<AdminBlogModalProps> = ({ isOpen, onClose, onPostsUpdated }) => {
   const [passcode, setPasscode] = useState('');
@@ -16,8 +17,12 @@ export const AdminBlogModal: React.FC<AdminBlogModalProps> = ({ isOpen, onClose,
   const [passcodeError, setPasscodeError] = useState(false);
 
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [activeTab, setActiveTab] = useState<'create' | 'manage' | 'export'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'manage' | 'export' | 'feedbacks' | 'users'>('create');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [feedbacks, setFeedbacks] = useState<FeedbackRecord[]>([]);
+  const [usersList, setUsersList] = useState<CloudUserProfile[]>([]);
+  const [usersSearch, setUsersSearch] = useState('');
+  const [dirtyUsers, setDirtyUsers] = useState<Set<string>>(new Set());
 
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -41,10 +46,24 @@ export const AdminBlogModal: React.FC<AdminBlogModalProps> = ({ isOpen, onClose,
       const authSession = sessionStorage.getItem('hookzen_admin_authed');
       if (authSession === 'true') {
         setIsAuthenticated(true);
+        loadFeedbacks();
+        loadUsers();
       }
       setPosts(getAllBlogPosts());
     }
   }, [isOpen]);
+
+  const loadFeedbacks = async () => {
+    const data = await fetchFeedbacksFromFirestore();
+    setFeedbacks(data);
+  };
+
+  const loadUsers = async () => {
+    const data = await fetchAllUsersFromFirestore();
+    // sort newly updated users first
+    data.sort((a, b) => (b.updatedAt ? new Date(b.updatedAt).getTime() : 0) - (a.updatedAt ? new Date(a.updatedAt).getTime() : 0));
+    setUsersList(data);
+  };
 
   if (!isOpen) return null;
 
@@ -54,9 +73,28 @@ export const AdminBlogModal: React.FC<AdminBlogModalProps> = ({ isOpen, onClose,
       setIsAuthenticated(true);
       sessionStorage.setItem('hookzen_admin_authed', 'true');
       setPasscodeError(false);
+      loadFeedbacks();
+      loadUsers();
     } else {
       setPasscodeError(true);
     }
+  };
+
+  const handleAdjustCreditsStage = (user: CloudUserProfile, change: number) => {
+    if (!user.uid) return;
+    const newBonus = (user.bonusCredits || 0) + change;
+    setUsersList(prev => prev.map(u => u.uid === user.uid ? { ...u, bonusCredits: newBonus } : u));
+    setDirtyUsers(prev => new Set(prev).add(user.uid!));
+  };
+
+  const handleSaveUser = async (user: CloudUserProfile) => {
+    if (!user.uid) return;
+    await saveUserProfileToFirestore(user.uid, { ...user, bonusCredits: user.bonusCredits });
+    setDirtyUsers(prev => {
+      const next = new Set(prev);
+      next.delete(user.uid!);
+      return next;
+    });
   };
 
   const handleTitleChange = (val: string) => {
@@ -172,7 +210,7 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
       aria-labelledby="admin-modal-title"
     >
       <div className="relative w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl space-y-6 my-8 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col justify-between">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -207,7 +245,7 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
             <div>
               <h3 className="text-lg font-bold text-slate-900">Secret Admin Access</h3>
               <p className="text-xs text-slate-500 mt-1">
-                Enter your admin passkey to publish, edit, or manage blog articles. (Default: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-amber-800">hookzen2026</code>)
+                Enter your admin passkey to publish, edit, or manage blog articles.
               </p>
             </div>
 
@@ -242,11 +280,10 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
                   setActiveTab('create');
                   resetForm();
                 }}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'create'
-                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'create'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
               >
                 <Plus className="h-3.5 w-3.5 text-amber-700" />
                 <span>{editingId ? 'Edit Article' : 'New Article'}</span>
@@ -254,11 +291,10 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
 
               <button
                 onClick={() => setActiveTab('manage')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'manage'
-                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'manage'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
               >
                 <BookOpen className="h-3.5 w-3.5 text-amber-700" />
                 <span>Manage Posts ({posts.length})</span>
@@ -266,14 +302,35 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
 
               <button
                 onClick={() => setActiveTab('export')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'export'
-                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'export'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
               >
                 <Code className="h-3.5 w-3.5 text-amber-700" />
                 <span>Export TS Code</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('feedbacks')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'feedbacks'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+              >
+                <MessageSquareText className="h-3.5 w-3.5 text-amber-700" />
+                <span>User Feedbacks ({feedbacks.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'users'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+              >
+                <Users className="h-3.5 w-3.5 text-amber-700" />
+                <span>Manage Users ({usersList.length})</span>
               </button>
             </div>
 
@@ -451,7 +508,7 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
               </div>
             )}
 
-            {/* TAB 3: EXPORT TS CODE */}
+            {/* TAB y: EXPORT TS CODE */}
             {activeTab === 'export' && (
               <div className="space-y-3 text-left">
                 <div className="flex items-center justify-between">
@@ -476,9 +533,126 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
                 />
               </div>
             )}
+
+            {/* TAB: FEEDBACKS */}
+            {activeTab === 'feedbacks' && (
+              <div className="space-y-3">
+                {feedbacks.length === 0 ? (
+                  <div className="text-center py-10 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <MessageSquareText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-500">No feedbacks collected yet.</p>
+                  </div>
+                ) : (
+                  feedbacks.map((fb, idx) => (
+                    <div key={fb.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-white shadow-sm text-left">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${fb.rating >= star ? 'fill-amber-400 text-amber-400' : 'fill-slate-100 text-slate-200'}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(fb.createdAt).toLocaleDateString()} {new Date(fb.createdAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-800 font-medium mb-3 whitespace-pre-wrap">
+                        {fb.comment || <span className="text-slate-400 italic">No comment provided</span>}
+                      </p>
+                      <div className="flex flex-col gap-0.5 pt-2 border-t border-slate-100 text-[10px] text-slate-500">
+                        <p><span className="font-bold">UID:</span> {fb.uid || 'N/A'}</p>
+                        <p><span className="font-bold">Email:</span> {fb.email || 'N/A'}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* TAB 5: MANAGE USERS */}
+            {activeTab === 'users' && (
+              <div className="space-y-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by Email or UID..."
+                    value={usersSearch}
+                    onChange={(e) => setUsersSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl bg-white text-xs text-slate-900 focus:ring-2 focus:ring-amber-200 focus:outline-none shadow-sm"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  {usersList.length === 0 ? (
+                    <div className="text-center py-6 bg-slate-50 border border-slate-200 rounded-2xl">
+                      <Users className="h-6 w-6 text-slate-300 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-slate-500">Loading or no users found.</p>
+                    </div>
+                  ) : (
+                    usersList
+                      .filter(u =>
+                        !usersSearch ||
+                        u.email?.toLowerCase().includes(usersSearch.toLowerCase()) ||
+                        u.uid?.toLowerCase().includes(usersSearch.toLowerCase())
+                      )
+                      .map((u, idx) => (
+                        <div key={u.uid || idx} className="p-4 rounded-2xl border border-slate-200 bg-white shadow-sm text-left flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-slate-800">{u.email || 'No Email'}</p>
+                            <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
+                              <span><strong className="text-slate-600">UID:</strong> {u.uid}</span>
+                              <span>|</span>
+                              <span><strong className="text-slate-600">Plan:</strong> {u.planType || 'free'}</span>
+                              {u.isPro && <span className="bg-amber-100 text-amber-700 font-bold px-1 rounded">PRO</span>}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                            <div className="text-center">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Bonus Credits</p>
+                              <div className="flex items-center justify-center gap-3">
+                                <button
+                                  onClick={() => handleAdjustCreditsStage(u, -10)}
+                                  className="h-6 w-6 flex items-center justify-center rounded bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold cursor-pointer"
+                                  title="Remove 10 Credits (1 Analysis)"
+                                >-10</button>
+                                <span className="text-sm font-black text-amber-600 w-6 text-center">{u.bonusCredits || 0}</span>
+                                <button
+                                  onClick={() => handleAdjustCreditsStage(u, 10)}
+                                  className="h-6 w-6 flex items-center justify-center rounded bg-white hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-emerald-700 font-bold cursor-pointer"
+                                  title="Add 10 Credits (1 Analysis)"
+                                >+10</button>
+                              </div>
+                            </div>
+                            <div className="text-center pl-4 border-l border-slate-200">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Used Today</p>
+                              <p className="text-xs font-black text-slate-700">{u.dailyCreditsUsed || 0}</p>
+                            </div>
+
+                            {/* NEW SAVE BUTTON */}
+                            {dirtyUsers.has(u.uid!) && (
+                              <button
+                                onClick={() => handleSaveUser(u)}
+                                className="ml-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-3 py-1.5 text-xs font-bold shadow-md cursor-pointer transition-all"
+                              >
+                                Save
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };

@@ -64,13 +64,13 @@ export interface PacingAnalysisResult {
 export interface HookAnalysisResult {
   hookText: string;
   hookType:
-    | 'Curiosity Gap'
-    | 'Negative Framing'
-    | 'Quantified Challenge'
-    | 'Pattern Interrupt'
-    | 'Direct Calling'
-    | 'Value Pitch'
-    | 'Weak / Descriptive';
+  | 'Curiosity Gap'
+  | 'Negative Framing'
+  | 'Quantified Challenge'
+  | 'Pattern Interrupt'
+  | 'Direct Calling'
+  | 'Value Pitch'
+  | 'Weak / Descriptive';
   emotionalIntensity: number; // 0 - 100
   titleHookScore: number; // 0 - 100
   scriptHookScore: number; // 0 - 100
@@ -101,7 +101,9 @@ export interface OptimizationTip {
   description: string;
   exampleFix?: string;
   priority: 'critical' | 'high' | 'quick-win';
-  impactPts: number;
+  impactPts?: number; // legacy
+  problem?: string; // New: What is wrong
+  impact?: 'High' | 'Medium' | 'Low'; // New: Expected impact category
 }
 
 export interface ScriptHeatmapLine {
@@ -210,8 +212,12 @@ export interface ViralScoreResult {
   timestamp: string;
   input: AnalysisInput;
   overallScore: number; // 0 - 100
+  contentScore?: number; // 0 - 100 Content Quality Score
+  viralPotential?: number; // 0 - 100 Viral resemblance Score
+  confidence?: 'High' | 'Medium' | 'Low'; // Prediction confidence
+  modelVersion?: string;
   letterGrade: LetterGrade;
-  tier: 'Viral Potential' | 'Strong Contender' | 'Moderate Reach' | 'Needs Optimization';
+  tier: 'Viral Breakout' | 'Strong Contender' | 'Moderate Reach' | 'Needs Optimization' | 'Viral Potential';
   percentileRank: number; // e.g. 96th percentile
   categoryScores: CategoryScores;
   hookAnalysis: HookAnalysisResult;

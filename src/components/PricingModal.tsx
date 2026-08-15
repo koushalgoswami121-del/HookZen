@@ -39,7 +39,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   onSignIn,
   isSigningIn = false,
 }) => {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual' | 'lifetime'>('annual');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual' | 'lifetime'>('monthly');
   const [isActivating, setIsActivating] = useState(false);
 
   // Close modal on Escape key
@@ -67,6 +67,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
   const handleTogglePro = async (enable: boolean, selectedPlan?: 'free' | 'monthly' | 'annual' | 'lifetime') => {
     if (enable) {
+      if (!user) {
+        if (onSignIn) onSignIn();
+        return;
+      }
+
       const targetPlan = selectedPlan || billingCycle;
 
       // Save pending plan to local storage & cloud profile so returning from checkout upgrades exact plan
@@ -76,15 +81,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         console.warn('Could not set pending_plan_type in localStorage', e);
       }
 
-      if (user) {
-        try {
-          await saveUserProfileToFirestore(user.uid, {
-            pendingPlanType: targetPlan,
-            planType: targetPlan,
-          });
-        } catch (cloudErr) {
-          console.warn('Cloud sync pending plan note:', cloudErr);
-        }
+      try {
+        await saveUserProfileToFirestore(user.uid, {
+          pendingPlanType: targetPlan,
+          planType: targetPlan,
+        });
+      } catch (cloudErr) {
+        console.warn('Cloud sync pending plan note:', cloudErr);
       }
 
       let checkoutUrl = POLAR_MONTHLY_CHECKOUT_URL;
@@ -157,30 +160,24 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
         {/* Modal Banner Context Alert */}
         {!user && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl bg-indigo-50/80 p-4 border border-indigo-200 text-indigo-950 text-sm font-semibold shadow-2xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl bg-amber-50 p-4 sm:p-5 border border-amber-200/80 shadow-inner">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-indigo-200 shadow-2xs">
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-amber-200 shadow-2xs">
+                <ShieldCheck className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="font-extrabold text-indigo-950 text-sm">Google Account Required to Purchase Pro</p>
-                <p className="text-xs text-indigo-800 font-medium">
-                  Sign in with Google so your unlimited Pro access is stored safely on your account across all devices.
+                <p className="font-extrabold text-amber-950 text-sm">Sign In Required for Pro access</p>
+                <p className="text-xs text-amber-800 font-medium">
+                  Create a free HookZen account to link your unlimited Pro subscription across all your devices securely.
                 </p>
               </div>
             </div>
             {onSignIn && (
               <button
                 onClick={onSignIn}
-                disabled={isSigningIn}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-2xs transition-all cursor-pointer shrink-0 disabled:opacity-60"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all cursor-pointer shrink-0"
               >
-                {isSigningIn ? 'Signing in...' : 'Sign in with Google'}
+                Create Account
               </button>
             )}
           </div>
@@ -228,21 +225,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             <div className="inline-flex items-center rounded-full bg-slate-100 p-1 border border-slate-200 text-xs font-bold gap-1">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`rounded-full px-3.5 py-1.5 transition-all cursor-pointer ${
-                  billingCycle === 'monthly'
-                    ? 'bg-white text-slate-900 shadow-2xs font-black'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`rounded-full px-3.5 py-1.5 transition-all cursor-pointer ${billingCycle === 'monthly'
+                  ? 'bg-white text-slate-900 shadow-2xs font-black'
+                  : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 Monthly ($9.99/mo)
               </button>
               <button
                 onClick={() => setBillingCycle('annual')}
-                className={`rounded-full px-3.5 py-1.5 transition-all cursor-pointer flex items-center gap-1.5 ${
-                  billingCycle === 'annual'
-                    ? 'bg-slate-900 text-white shadow-2xs font-black'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`rounded-full px-3.5 py-1.5 transition-all cursor-pointer flex items-center gap-1.5 ${billingCycle === 'annual'
+                  ? 'bg-slate-900 text-white shadow-2xs font-black'
+                  : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 <span>Annual ($79/yr)</span>
                 <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-slate-950">
@@ -251,14 +246,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               </button>
               <button
                 onClick={() => setBillingCycle('lifetime')}
-                className={`rounded-full px-3.5 py-1.5 transition-all cursor-pointer flex items-center gap-1.5 ${
-                  billingCycle === 'lifetime'
-                    ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
-                    : 'text-slate-700 hover:text-slate-900 bg-amber-50/80 hover:bg-amber-100 border border-amber-200/60'
-                }`}
+                className={`rounded-full px-3.5 py-1.5 transition-all cursor-pointer flex items-center gap-1.5 ${billingCycle === 'lifetime'
+                  ? 'bg-amber-500 text-slate-950 shadow-2xs font-black'
+                  : 'text-slate-700 hover:text-slate-900 bg-amber-50/80 hover:bg-amber-100 border border-amber-200/60'
+                  }`}
               >
                 <Sparkles className="h-3 w-3 fill-slate-950 text-slate-950" />
-                <span>Lifetime ($79)</span>
+                <span>Lifetime ($149)</span>
               </button>
             </div>
           </div>
@@ -267,11 +261,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         {/* Pricing Cards Grid (Equal Heights) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch pt-2">
           {/* Card 1: Free Plan */}
-          <div className={`flex flex-col justify-between rounded-3xl border p-6 space-y-5 transition-all ${
-            !freemiumState.isPro
-              ? 'bg-white border-slate-300 shadow-md ring-2 ring-slate-400/20'
-              : 'bg-slate-50/70 border-slate-200'
-          }`}>
+          <div className={`flex flex-col justify-between rounded-3xl border p-6 space-y-5 transition-all ${!freemiumState.isPro
+            ? 'bg-white border-slate-300 shadow-md ring-2 ring-slate-400/20'
+            : 'bg-slate-50/70 border-slate-200'
+            }`}>
             <div className="space-y-4">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -338,13 +331,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </div>
 
           {/* Card 2: Pro Subscription */}
-          <div className={`relative flex flex-col justify-between rounded-3xl border-2 p-6 space-y-5 transition-all ${
-            freemiumState.isPro && freemiumState.planType !== 'lifetime'
-              ? 'bg-gradient-to-b from-amber-50/90 via-white to-amber-50/40 border-amber-400 shadow-xl ring-2 ring-amber-400/30'
-              : billingCycle === 'annual' || billingCycle === 'monthly'
+          <div className={`relative flex flex-col justify-between rounded-3xl border-2 p-6 space-y-5 transition-all ${freemiumState.isPro && freemiumState.planType !== 'lifetime'
+            ? 'bg-gradient-to-b from-amber-50/90 via-white to-amber-50/40 border-amber-400 shadow-xl ring-2 ring-amber-400/30'
+            : billingCycle === 'annual' || billingCycle === 'monthly'
               ? 'bg-white border-amber-300 shadow-lg hover:shadow-xl ring-2 ring-amber-400/20'
               : 'bg-white border-slate-200 opacity-90'
-          }`}>
+            }`}>
             {/* Top Badge */}
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3.5 py-0.5 text-[11px] font-black text-slate-950 shadow-sm flex items-center gap-1">
               <Sparkles className="h-3 w-3 fill-slate-950" />
@@ -359,11 +351,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     <Crown className="h-4 w-4 text-amber-500 fill-amber-400" />
                   </h3>
                   {freemiumState.isPro && (
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
-                      freemiumState.planType !== 'lifetime'
-                        ? 'bg-amber-200 text-amber-950 border border-amber-300'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${freemiumState.planType !== 'lifetime'
+                      ? 'bg-amber-200 text-amber-950 border border-amber-300'
+                      : 'bg-slate-100 text-slate-600'
+                      }`}>
                       {freemiumState.planType !== 'lifetime' ? 'Active Subscription' : 'Included in Lifetime'}
                     </span>
                   )}
@@ -388,19 +379,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <ul className="space-y-2.5 text-xs text-slate-800 font-medium">
                 <li className="flex items-start gap-2">
                   <ShieldCheck className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span><strong>No Ads</strong>: 100% ad-free experience across all tools.</span>
+                  <span><strong>No Ads</strong>: 100% ad-free</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span><strong>Unlimited Audits</strong>: No daily cap on video script &amp; title checks.</span>
+                  <span><strong>Unlimited Audits</strong>: Analyze without limits</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <TrendingUp className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span><strong>FYP SEO Keyword Density</strong>: Search index breakdown.</span>
+                  <span><strong>Deep Analysis</strong>: Detailed performance breakdown</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Bot className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span><strong>Historical Trend Tracker</strong>: Channel growth benchmarking.</span>
+                  <span><strong>FYP &amp; SEO</strong>: Keyword and search insights</span>
                 </li>
               </ul>
             </div>
@@ -408,42 +399,39 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             <button
               onClick={() => handleTogglePro(true, billingCycle === 'annual' ? 'annual' : 'monthly')}
               disabled={isActivating || (freemiumState.isPro && freemiumState.planType !== 'lifetime')}
-              className={`w-full py-3 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${
-                freemiumState.isPro && freemiumState.planType !== 'lifetime'
-                  ? 'bg-amber-400 text-slate-950 cursor-default'
-                  : freemiumState.isPro && freemiumState.planType === 'lifetime'
+              className={`w-full py-3.5 rounded-xl text-sm font-black tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer ${freemiumState.isPro && freemiumState.planType !== 'lifetime'
+                ? 'bg-amber-400 text-slate-950 cursor-default'
+                : freemiumState.isPro && freemiumState.planType === 'lifetime'
                   ? 'bg-slate-100 text-slate-500 cursor-default'
-                  : 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:from-amber-600 hover:to-amber-700 font-black'
-              }`}
+                  : 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:from-amber-600 hover:to-amber-700'
+                }`}
             >
               <Crown className="h-4 w-4 fill-current" />
-              <span>
+              <span className="whitespace-nowrap">
                 {freemiumState.isPro && freemiumState.planType !== 'lifetime'
-                  ? 'Pro Active (Enjoy Unlimited)'
+                  ? 'Pro Active · Unlimited'
                   : freemiumState.isPro && freemiumState.planType === 'lifetime'
-                  ? 'Included in Lifetime Pass'
-                  : billingCycle === 'annual'
-                  ? 'Get Pro Yearly ($79/yr)'
-                  : 'Get Pro Monthly ($9.99/mo)'}
+                    ? 'Included in Lifetime'
+                    : billingCycle === 'annual'
+                      ? 'Get Pro Yearly'
+                      : 'Get Pro Monthly'}
               </span>
               {(!freemiumState.isPro) && <ArrowRight className="h-3.5 w-3.5" />}
             </button>
           </div>
 
           {/* Card 3: Lifetime Pass (Warm Gold & Slate Aesthetic - No Dark Purple) */}
-          <div className={`relative flex flex-col justify-between rounded-3xl border-2 transition-all p-6 space-y-5 ${
-            freemiumState.isPro && freemiumState.planType === 'lifetime'
-              ? 'bg-gradient-to-b from-amber-100/90 via-white to-amber-50/70 border-amber-400 text-slate-900 shadow-xl ring-2 ring-amber-400/40'
-              : billingCycle === 'lifetime'
+          <div className={`relative flex flex-col justify-between rounded-3xl border-2 transition-all p-6 space-y-5 ${freemiumState.isPro && freemiumState.planType === 'lifetime'
+            ? 'bg-gradient-to-b from-amber-100/90 via-white to-amber-50/70 border-amber-400 text-slate-900 shadow-xl ring-2 ring-amber-400/40'
+            : billingCycle === 'lifetime'
               ? 'bg-gradient-to-b from-amber-50/90 via-white to-amber-100/40 border-amber-400 text-slate-900 shadow-xl ring-2 ring-amber-400/30'
               : 'bg-white border-slate-200 text-slate-900 shadow-md hover:shadow-lg hover:border-amber-300'
-          }`}>
-            {/* Top Badge */}
-            <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3.5 py-0.5 text-[10px] font-black shadow-xs flex items-center gap-1.5 border whitespace-nowrap ${
-              freemiumState.isPro && freemiumState.planType === 'lifetime'
-                ? 'bg-emerald-600 text-white border-emerald-500'
-                : 'bg-amber-400 text-slate-950 border-amber-300'
             }`}>
+            {/* Top Badge */}
+            <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3.5 py-0.5 text-[10px] font-black shadow-xs flex items-center gap-1.5 border whitespace-nowrap ${freemiumState.isPro && freemiumState.planType === 'lifetime'
+              ? 'bg-emerald-600 text-white border-emerald-500'
+              : 'bg-amber-400 text-slate-950 border-amber-300'
+              }`}>
               <Sparkles className="h-3 w-3 fill-current" />
               <span>
                 {freemiumState.isPro && freemiumState.planType === 'lifetime'
@@ -471,47 +459,28 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 <p className="text-xs text-slate-600 font-medium">
                   Zero recurring bills. All future Pro updates included.
                 </p>
+                {/* Additional Scarcity Text requested by user */}
+                <p className="text-[10px] text-amber-900 bg-amber-100/50 p-1.5 rounded-lg border border-amber-200/50 font-semibold leading-tight">
+                  Available for a limited time. Lifetime pricing may increase as Hookzen grows.
+                </p>
               </div>
 
               {/* Price Row */}
               <div className="flex items-baseline gap-2 border-b border-slate-100 pb-3.5">
                 <span className="text-3xl font-black text-slate-900">
-                  $79
-                </span>
-                <span className="text-sm font-semibold line-through text-slate-400">
                   $149
                 </span>
                 <span className="text-xs font-semibold text-slate-500">
                   /one-time
                 </span>
-                <span className="ml-auto rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5">
-                  Save $70
-                </span>
-              </div>
-
-              {/* Micro Scarcity Bar */}
-              <div className="rounded-xl p-2.5 text-xs space-y-1.5 border bg-amber-50/90 border-amber-200 text-slate-800">
-                <div className="flex items-center justify-between text-[11px] font-bold">
-                  <span className="flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-amber-600 fill-amber-500" />
-                    <span>Early Bird Launch Edition</span>
-                  </span>
-                  <span className="text-amber-800 font-extrabold">84/100 Claimed</span>
-                </div>
-                <div className="w-full h-1.5 rounded-full bg-amber-200/80 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full w-[84%]" />
-                </div>
               </div>
 
               {/* Features List */}
+              <div className="border-t border-slate-100 my-1" />
               <ul className="space-y-2.5 text-xs font-medium text-slate-700">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>All Current &amp; Future Pro Features</strong></span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Unlimited Video Script Audits Forever</span>
+                  <span>Everything Included in Yearly features</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -519,7 +488,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Priority Server Speed &amp; White-label PDFs</span>
+                  <span>All Current &amp; Future Pro Features</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Priority server speed</span>
                 </li>
               </ul>
             </div>
@@ -527,22 +500,21 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             <button
               onClick={() => handleTogglePro(true, 'lifetime')}
               disabled={isActivating || (freemiumState.isPro && freemiumState.planType === 'lifetime')}
-              className={`w-full py-3 rounded-xl text-xs font-black transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${
-                freemiumState.isPro && freemiumState.planType === 'lifetime'
-                  ? 'bg-emerald-600 text-white cursor-default shadow-xs'
-                  : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black'
-              }`}
+              className={`w-full py-3.5 rounded-xl text-sm font-black tracking-wide transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 ${freemiumState.isPro && freemiumState.planType === 'lifetime'
+                ? 'bg-emerald-600 text-white cursor-default shadow-xs'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950'
+                }`}
             >
               {freemiumState.isPro && freemiumState.planType === 'lifetime' ? (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-white" />
-                  <span>Lifetime Plan Active (Owned Forever)</span>
+                  <span>Lifetime Plan Active · Owned Forever</span>
                 </>
               ) : (
                 <>
-                  <Zap className="h-4 w-4 fill-slate-950 text-slate-950" />
-                  <span>Get Lifetime Pass ($79)</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <Zap className="h-4 w-4 shrink-0 fill-slate-950 text-slate-950" />
+                  <span className="whitespace-nowrap">Get Lifetime Pass</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                 </>
               )}
             </button>
@@ -557,17 +529,18 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 px-4 py-2 text-xs font-extrabold text-slate-700 hover:text-slate-900 transition-all cursor-pointer"
-            >
-              Continue with Free Plan
+            <span className="shrink-0 text-slate-300">•</span>
+            <button onClick={onClose} className="hover:text-slate-900 transition-colors cursor-pointer text-xs font-medium text-slate-600">
+              No thanks, I'll stay on free
             </button>
+          </div>
+          <div className="text-center mt-4">
+            <p className="text-[10px] sm:text-xs text-slate-400 font-medium">
+              Need help? Contact <a href="mailto:support@hookzen.me" className="text-amber-600 hover:underline">support@hookzen.me</a>
+            </p>
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-

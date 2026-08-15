@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User } from 'firebase/auth';
 import { Header } from './components/Header';
 import { InputForm } from './components/InputForm';
@@ -13,6 +13,7 @@ import { PricingModal } from './components/PricingModal';
 import { AuthModal } from './components/AuthModal';
 import { PrivacyModal } from './components/PrivacyModal';
 import { AccountSettingsModal } from './components/AccountSettingsModal';
+import { FeedbackModal } from './components/FeedbackModal';
 import { AnalysisInput, ViralScoreResult } from './types';
 import { calculateViralScore } from './utils/scoringEngine';
 import { formatTo12HrTime } from './utils/formatTime';
@@ -34,12 +35,14 @@ import {
   clearUserHistoryInFirestore,
   fetchUserProfileFromFirestore,
   saveUserProfileToFirestore,
+  subscribeToUserProfile,
   deleteAccountPermanently,
   getPublicIp,
   fetchIpUsageFromFirestore,
   saveIpUsageToFirestore,
 } from './lib/firebase';
-import { Smartphone, ArrowLeft, BookOpen, TrendingUp, Zap, Flame, Target, Activity, Eye, BarChart3, CheckCircle2, Crown, ShieldCheck } from 'lucide-react';
+import { Smartphone, ArrowLeft, BookOpen, TrendingUp, Zap, Flame, Target, Activity, Eye, BarChart3, CheckCircle2, Crown, ShieldCheck, Mail } from 'lucide-react';
+import { AnalyzingAnimation } from './components/AnalyzingAnimation';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'calculator' | 'blog' | 'payment_success' | 'payment_cancel'>('calculator');
@@ -62,6 +65,9 @@ export default function App() {
   const [pricingReason, setPricingReason] = useState<'limit_reached' | 'pro_feature_locked' | 'general'>('general');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const feedbackResolveRef = useRef<((submitted: boolean) => void) | null>(null);
 
   const handleOpenPricing = (reason: 'limit_reached' | 'pro_feature_locked' | 'general' = 'general') => {
     setPricingReason(reason);
@@ -117,8 +123,17 @@ export default function App() {
           const ipUsed = (ipRecord && ipRecord.lastResetDate === today) ? Number(ipRecord.dailyCreditsUsed || 0) : 0;
           const localUsed = Number(localState.dailyCreditsUsed || 0);
 
-          // For free users, credits used is the MAXIMUM across account history, local state, and IP record
-          const maxCreditsUsed = isPaid ? 0 : Math.max(localUsed, cloudUsed, ipUsed);
+          let maxCreditsUsed = 0;
+          if (!isPaid) {
+            // For returning users with a verified cloud history today, their cloud profile is the absolute source of truth.
+            // This prevents IP usage from anonymous tabs from unfairly draining their logged-in account balance.
+            if (cloudProfile && cloudProfile.lastResetDate === today && cloudProfile.dailyCreditsUsed !== undefined) {
+              maxCreditsUsed = cloudUsed;
+            } else {
+              // Brand new sign-ups are initialized with the anonymous IP/local usage to prevent endless trial abuse.
+              maxCreditsUsed = Math.max(localUsed, ipUsed);
+            }
+          }
 
           const mergedState: FreemiumState = {
             ...localState,
@@ -127,6 +142,7 @@ export default function App() {
               ? (cloudProfile?.planType || (localState.planType !== 'free' ? localState.planType : 'monthly'))
               : 'free',
             dailyCreditsUsed: maxCreditsUsed,
+            bonusCredits: cloudProfile?.bonusCredits || localState.bonusCredits || 0,
             lastResetDate: today,
           };
 
@@ -142,6 +158,7 @@ export default function App() {
             isPro: mergedState.isPro,
             planType: mergedState.planType,
             dailyCreditsUsed: mergedState.dailyCreditsUsed,
+            bonusCredits: mergedState.bonusCredits,
             lastResetDate: mergedState.lastResetDate,
           });
 
@@ -182,6 +199,42 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Real-Time Background Sync for Bonus Credits & Pro Status updates
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToUserProfile(user.uid, (cloudProfile) => {
+      if (!cloudProfile) return;
+
+      setFreemiumState(prev => {
+        let hasChanges = false;
+        const newState = { ...prev };
+
+        if (cloudProfile.bonusCredits !== undefined && prev.bonusCredits !== cloudProfile.bonusCredits) {
+          newState.bonusCredits = cloudProfile.bonusCredits;
+          hasChanges = true;
+        }
+
+        if (cloudProfile.dailyCreditsUsed !== undefined && prev.dailyCreditsUsed !== cloudProfile.dailyCreditsUsed && cloudProfile.lastResetDate === prev.lastResetDate) {
+          newState.dailyCreditsUsed = cloudProfile.dailyCreditsUsed;
+          hasChanges = true;
+        }
+
+        if (cloudProfile.isPro !== undefined && prev.isPro !== cloudProfile.isPro) {
+          newState.isPro = cloudProfile.isPro;
+          newState.planType = cloudProfile.planType || 'free';
+          hasChanges = true;
+        }
+
+        if (hasChanges) {
+          saveFreemiumState(newState);
+          return newState;
+        }
+        return prev;
+      });
+    });
+    return () => unsub();
+  }, [user]);
 
   const handleSignIn = async () => {
     if (isSigningIn) return;
@@ -322,26 +375,47 @@ export default function App() {
 
   // Run Analysis
   const handleAnalyze = async (input: AnalysisInput) => {
-    // Check & sync IP credits first
-    const syncedState = await checkAndSyncIpCredits();
+    // Check & sync IP credits first, but bypass if the user is authenticated via an account
+    const syncedState = await checkAndSyncIpCredits(!!user);
     setFreemiumState(syncedState);
 
     // Check if free user has sufficient credits remaining (< 10 credits) on this IP address or device
     const remaining = getRemainingCredits();
-    if (!syncedState.isPro && (syncedState.maxFreeDailyCredits - syncedState.dailyCreditsUsed < 10 || remaining < 10)) {
+    const stateWithBonus = syncedState.maxFreeDailyCredits + (syncedState.bonusCredits || 0) - syncedState.dailyCreditsUsed;
+    if (!syncedState.isPro && (stateWithBonus < 10 || remaining < 10)) {
       handleOpenPricing('limit_reached');
       return;
     }
 
     setIsAnalyzing(true);
+    const analysisStartTime = Date.now();
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
       const result = await calculateViralScore(input);
+
+      // Guarantee minimum 3.5s animation so it never feels instant
+      const elapsed = Date.now() - analysisStartTime;
+      const minDuration = 3500;
+      if (elapsed < minDuration) {
+        await new Promise((resolve) => setTimeout(resolve, minDuration - elapsed));
+      }
 
       // Deduct 10 credits per analysis if not Pro
       useCredit(10);
       const updatedState = getFreemiumState();
+
+      // FEEDBACK INTERCEPTION LOGIC
+      // If the user has used exactly 30 credits (meaning this is their 3rd generation)
+      // and they haven't given feedback yet, pause the result reveal to ask them.
+      const hasGivenFeedback = localStorage.getItem('hkz_feedback_given');
+      if (updatedState.dailyCreditsUsed === 30 && !hasGivenFeedback) {
+        setIsFeedbackOpen(true);
+        // Pause until user submits/skips modal
+        await new Promise<void>((resolve) => {
+          feedbackResolveRef.current = (submitted) => resolve();
+        });
+      }
+
       setFreemiumState(updatedState);
 
       if (user) {
@@ -349,6 +423,7 @@ export default function App() {
           isPro: updatedState.isPro,
           planType: updatedState.planType,
           dailyCreditsUsed: updatedState.dailyCreditsUsed,
+          bonusCredits: updatedState.bonusCredits,
           lastResetDate: updatedState.lastResetDate,
         });
       }
@@ -385,6 +460,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-watercolor text-slate-900 font-sans antialiased selection:bg-amber-200 flex flex-col justify-between">
+      {/* Analyzing Animation Overlay */}
+      {isAnalyzing && <AnalyzingAnimation />}
       <div>
         {/* Header */}
         <Header
@@ -533,7 +610,11 @@ export default function App() {
         }}
         reason={pricingReason}
         user={user}
-        onSignIn={handleSignIn}
+        onSignIn={() => {
+          setIsPricingOpen(false);
+          setAuthModalMode('signup');
+          setIsAuthModalOpen(true);
+        }}
         isSigningIn={isSigningIn}
       />
 
@@ -565,6 +646,19 @@ export default function App() {
         isSigningIn={isSigningIn}
         mode={authModalMode}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
+      />
+
+      {/* Feedback Modal for 3rd generation milestone */}
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={(submitted) => {
+          setIsFeedbackOpen(false);
+          if (feedbackResolveRef.current) {
+            feedbackResolveRef.current(submitted);
+            feedbackResolveRef.current = null;
+          }
+        }}
+        user={user}
       />
 
       {/* Privacy Policy Modal */}
@@ -611,9 +705,13 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4 font-medium text-slate-600">
-            <button onClick={handleGoHome} className="hover:text-amber-800 transition-colors cursor-pointer">
-              Calculator
-            </button>
+            <div className="flex items-center gap-1.5 transition-colors">
+              <span className="hidden sm:inline">Have any query?</span>
+              <a href="mailto:support@hookzen.me" className="flex items-center gap-1 text-amber-600 hover:text-amber-700 font-bold cursor-pointer">
+                <Mail className="h-3 w-3" />
+                <span>Mail us here</span>
+              </a>
+            </div>
             <span>•</span>
             <button onClick={handleOpenBlog} className="hover:text-amber-800 transition-colors flex items-center gap-1 cursor-pointer">
               <BookOpen className="h-3 w-3 text-amber-600" />

@@ -140,7 +140,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   const formatHookTextForPdf = (hookText: string): string => {
     if (!hookText) return '';
     let formatted = hookText;
-    
+
     // 1. Strip off trailing repeated title or snippet after "until you watch this!"
     formatted = formatted.replace(/(until you watch this!)\s+.*/i, '$1');
     formatted = formatted.replace(/(until you watch this\!?)\s+.*/i, '$1');
@@ -165,7 +165,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       const indRegex = new RegExp(`\\b${input.industry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
       formatted = formatted.replace(indRegex, '[your topic]');
     }
-    
+
     // 4. Replace common industry terms
     const commonTerms = ['Tech', 'Technology', 'Finance', 'Fitness', 'Business', 'Lifestyle', 'Education', 'Gaming', 'Beauty', 'Marketing', 'Crypto', 'E-commerce', 'Health', 'Software', 'Coding'];
     for (const term of commonTerms) {
@@ -189,8 +189,8 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
 
     const originalTitle = document.title;
     const sanitizedTitle = (input.title || 'Video_Audit_Report').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
-    const fileName = mode === 'client_detail' 
-      ? `HookZen_Client_Detailed_Audit_${sanitizedTitle}.pdf` 
+    const fileName = mode === 'client_detail'
+      ? `HookZen_Client_Detailed_Audit_${sanitizedTitle}.pdf`
       : `HookZen_Virality_Summary_${sanitizedTitle}.pdf`;
     document.title = fileName;
 
@@ -340,12 +340,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         const hookList = (result.suggestedTitleAlternatives && result.suggestedTitleAlternatives.length > 0)
           ? result.suggestedTitleAlternatives.map(formatHookTextForPdf)
           : [
-              "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
-              "3 Mistakes Everyone Makes in [your topic]",
-              "Why Nobody Is Talking About This [your topic] Hack",
-              "How to Get 10x Results in [your topic] Faster",
-              "Stop Doing [your topic] Right Now Until You Watch This"
-            ];
+            "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
+            "3 Mistakes Everyone Makes in [your topic]",
+            "Why Nobody Is Talking About This [your topic] Hack",
+            "How to Get 10x Results in [your topic] Faster",
+            "Stop Doing [your topic] Right Now Until You Watch This"
+          ];
 
         hookList.slice(0, 5).forEach((titleAlt, i) => {
           const lines = doc.splitTextToSize(`${i + 1}. "${titleAlt}"`, 510);
@@ -447,10 +447,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       {/* 1. REPORT TITLE */}
       <div className="text-center space-y-1.5 pt-2">
         <h1 className="font-serif-display text-3xl font-black text-slate-900 sm:text-4xl md:text-5xl tracking-tight leading-tight">
-          Virality Analysis Report
+          Performance Analysis Report
         </h1>
         <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-xl mx-auto flex items-center justify-center gap-2 flex-wrap">
-          <span>Comprehensive reach breakdown, retention forecast, and actionable optimization insights.</span>
+          <span>AI-powered short-form performance analyzer and retention forecast.</span>
           {result.timestamp && (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200/80">
               <Clock className="h-3 w-3 text-amber-600" />
@@ -470,12 +470,18 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 <Zap className="h-4 w-4 fill-amber-500 text-amber-500" />
               </div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                Go Viral Score
+                Viral Potential Score
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-              Evaluates hook curiosity gap, speech pacing, industry SEO keywords, and thumbnail visual clarity.
+              A data-informed estimate of short-form performance potential based on content signals.
             </p>
+            <div className="mt-3 bg-amber-50 rounded-lg p-2.5 border border-amber-200 flex items-start gap-2 shadow-sm">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-amber-900 leading-tight font-medium">
+                <strong>Important:</strong> This score is an AI estimate based on content characteristics (hook strength, pacing, clarity). It is not a guarantee of views or virality. Actual performance can vary significantly based on audience, distribution, and timing.
+              </p>
+            </div>
           </div>
 
           {/* Center Column: Semi-Circular Arc Gauge */}
@@ -521,19 +527,21 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             {/* Bottom Virality Potential & Grade Pills */}
             <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
               <div className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-wider ${potentialInfo.badgeBg} shadow-2xs`}>
-                VIRALITY POTENTIAL: {potentialInfo.label}
+                POTENTIAL: {potentialInfo.label}
               </div>
-              <div className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${
-                detailed.letterGrade === 'A+'
+              <div className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs bg-slate-100 text-slate-700 border-slate-300`}>
+                CONFIDENCE: {result.confidence || 'MEDIUM'}
+              </div>
+              <div className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${detailed.letterGrade === 'A+'
                   ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-400'
                   : detailed.letterGrade === 'A'
-                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                  : detailed.letterGrade === 'B'
-                  ? 'bg-blue-100 text-blue-900 border-blue-300'
-                  : detailed.letterGrade === 'C'
-                  ? 'bg-amber-100 text-amber-900 border-amber-300'
-                  : 'bg-rose-100 text-rose-900 border-rose-300'
-              }`}>
+                    ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                    : detailed.letterGrade === 'B'
+                      ? 'bg-blue-100 text-blue-900 border-blue-300'
+                      : detailed.letterGrade === 'C'
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : 'bg-rose-100 text-rose-900 border-rose-300'
+                }`}>
                 GRADE: {detailed.letterGrade}
               </div>
             </div>
@@ -578,11 +586,11 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <div className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-amber-600" />
               <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                Predicted Audience Retention Curve
+                Predicted Viewer Retention
               </h3>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
-              Simulated viewer retention drop-off from 0s to video end ({videoDurationSec} seconds)
+              This is a model estimate based on your script/video characteristics, not observed audience data.
             </p>
           </div>
 
@@ -655,9 +663,8 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 Hook Phase (0s - 3s)
               </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                retention3s >= 75 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-              }`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${retention3s >= 75 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                }`}>
                 {retention3s}% Retained
               </span>
             </div>
@@ -677,9 +684,8 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 Mid-Video ({t50}s)
               </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                retentionMid >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-              }`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${retentionMid >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                }`}>
                 {retentionMid}% Retained
               </span>
             </div>
@@ -699,9 +705,8 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 Completion Rate ({videoDurationSec}s)
               </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                retentionEnd >= 35 ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
-              }`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${retentionEnd >= 35 ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
+                }`}>
                 {retentionEnd}% Finish
               </span>
             </div>
@@ -734,413 +739,409 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       </div>
 
       {/* 5. SPLIT CONTAINER: ANALYSIS BREAKDOWN + TOP IMPROVEMENT TIPS */}
-      {showDeeperAnalysis && (
-        <>
-          <div ref={breakdownRef} id="breakdown-section" className="grid grid-cols-1 gap-7 lg:grid-cols-12 scroll-mt-6 animate-in fade-in duration-200">
-          {/* Left Column: Analysis Breakdown (5 cols) */}
-        <div className="lg:col-span-5 relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 shadow-xl backdrop-blur-md space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-amber-600" />
-              <h3 className="text-lg font-bold text-slate-900">
-                Analysis Breakdown
-              </h3>
-            </div>
-            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/80">
-              Key Metrics
-            </span>
-          </div>
-
-          <div className="space-y-3.5">
-            {/* Card 1: Opening Hook */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-amber-300 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-amber-500 shrink-0" />
-                  <span className="text-sm font-bold text-slate-900">First 3s Hook</span>
-                </div>
-                <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${
-                  categoryScores.hookScore >= 75
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {categoryScores.hookScore}/100
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-600 leading-relaxed">
-                <strong className="text-slate-900">{hookAnalysis.hookType}: </strong>
-                {categoryScores.hookScore >= 65
-                  ? 'Captures curiosity early to prevent viewer scroll-away.'
-                  : 'Low early urgency. Try opening with a bold statement or direct question.'}
-              </p>
-            </div>
-
-            {/* Card 2: Script Structure */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-indigo-300 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-indigo-500 shrink-0" />
-                  <span className="text-sm font-bold text-slate-900">Script Structure</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${
-                    categoryScores.pacingScore >= 75
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
-                    {categoryScores.pacingScore}/100
+      {
+        showDeeperAnalysis && (
+          <>
+            <div ref={breakdownRef} id="breakdown-section" className="grid grid-cols-1 gap-7 lg:grid-cols-12 scroll-mt-6 animate-in fade-in duration-200">
+              {/* Left Column: Analysis Breakdown (5 cols) */}
+              <div className="lg:col-span-5 relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 shadow-xl backdrop-blur-md space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-amber-600" />
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Analysis Breakdown
+                    </h3>
+                  </div>
+                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/80">
+                    Key Metrics
                   </span>
                 </div>
-              </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {categoryScores.pacingScore >= 75
-                  ? `Good sentence rhythm and structural balance across your transcript.`
-                  : categoryScores.pacingScore >= 45
-                  ? `Script pacing is medium; sentence structure needs improvement for better viewer retention.`
-                  : `Script structure looks unorganized with poor pacing and weak sentence rhythm.`}
-              </p>
-
-              {pacingAnalysis.structuralBeats.fluffWordCount > 0 && (
-                <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500 font-medium">
-                  <span className="font-bold text-slate-700">Filler Words:</span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-mono">
-                    {keywordAnalysis.fluffWords.slice(0, 3).join(', ')} ({pacingAnalysis.structuralBeats.fluffWordCount})
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Card 3: Niche & SEO Alignment + Pro FYP Keyword Density Matrix */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-purple-300 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-purple-500 shrink-0" />
-                  <span className="text-sm font-bold text-slate-900">SEO & FYP Algorithm</span>
-                </div>
-                <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${
-                  categoryScores.keywordScore >= 70
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {categoryScores.keywordScore}/100
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {keywordAnalysis.detectedIndustryKeywords.length > 0 ? (
-                  <span>Detected high-intent topic keywords for search indexing.</span>
-                ) : (
-                  <span>Add explicit niche topic words in title/script so algorithms push to the right FYP.</span>
-                )}
-              </p>
-
-              {/* Pro FYP Keyword Density Breakdown */}
-              {freemiumState?.isPro ? (
-                <div className="mt-2 rounded-xl bg-purple-50/70 border border-purple-200/80 p-3 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-purple-950">
-                    <span className="flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-purple-600" />
-                      FYP SEO Keyword Density Matrix
-                    </span>
-                    <span className="bg-purple-200 text-purple-900 px-1.5 py-0.2 rounded font-mono">
-                      {((keywordAnalysis.detectedIndustryKeywords.length * 3) / Math.max(1, pacingAnalysis.wordCount || 15) * 100).toFixed(1)}% Density
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                    <div className="bg-white/90 p-2 rounded-lg border border-purple-100">
-                      <span className="text-slate-500 font-semibold block text-[10px]">TikTok FYP Index</span>
-                      <strong className="text-purple-900 font-bold">
-                        {categoryScores.keywordScore >= 70 ? 'High Discoverability' : 'Moderate Indexing'}
-                      </strong>
-                    </div>
-                    <div className="bg-white/90 p-2 rounded-lg border border-purple-100">
-                      <span className="text-slate-500 font-semibold block text-[10px]">Shorts SEO Rank</span>
-                      <strong className="text-purple-900 font-bold">Top 15% Niche</strong>
-                    </div>
-                  </div>
-
-                  {keywordAnalysis.detectedIndustryKeywords.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {keywordAnalysis.detectedIndustryKeywords.map((kw, i) => (
-                        <span key={i} className="rounded-md bg-white px-2 py-0.5 text-[10px] font-bold text-purple-900 border border-purple-200 shadow-2xs">
-                          #{kw}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div
-                  onClick={() => onOpenPricing && onOpenPricing('pro_feature_locked')}
-                  className="mt-2 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 p-2.5 text-center cursor-pointer hover:bg-purple-100/60 transition-all space-y-1"
-                >
-                  <div className="flex items-center justify-center gap-1 text-xs font-extrabold text-purple-950">
-                    <Crown className="h-3.5 w-3.5 fill-purple-400 text-purple-600" />
-                    <span>Unlock FYP SEO Keyword Density Matrix</span>
-                  </div>
-                  <p className="text-[11px] text-purple-800 font-medium">
-                    Analyze TikTok & Shorts search engine index density and high-volume tags with Pro.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Card 4: Thumbnail & Visual Format */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-cyan-300 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-cyan-600 shrink-0" />
-                  <span className="text-sm font-bold text-slate-900">Visual Format</span>
-                </div>
-                <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${
-                  categoryScores.visualScore >= 70
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-slate-100 text-slate-700 border border-slate-200'
-                }`}>
-                  {categoryScores.visualScore}/100
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {imageMetrics.hasImage ? (
-                  imageMetrics.isNineToSixteen
-                    ? 'Full-screen 9:16 vertical ratio maximizes smartphone feeds.'
-                    : 'Horizontal frame causes black bars. Vertical 9:16 yields 35%+ more clicks.'
-                ) : (
-                  'Upload a 9:16 vertical cover image with bold text overlay for higher feed CTR.'
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Top Improvement Tips (7 cols) */}
-        <div className="lg:col-span-7 relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 shadow-xl backdrop-blur-md space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-600" />
-              <h3 className="text-lg font-bold text-slate-900">
-                Actionable Optimization Tips
-              </h3>
-            </div>
-            {result.actionableTips && result.actionableTips.length > 0 && (
-              <span className="text-xs font-bold text-amber-900 bg-amber-100/90 border border-amber-200 px-3 py-1 rounded-full">
-                +{result.actionableTips.reduce((sum, t) => sum + (t.impactPts || 0), 0)} Total Potential Points
-              </span>
-            )}
-          </div>
-
-          {/* Category Filter Tabs */}
-          {result.actionableTips && result.actionableTips.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {[
-                { id: 'all', label: 'All Tips', count: result.actionableTips.length },
-                { id: 'hook', label: 'Hook', count: result.actionableTips.filter(t => t.category === 'hook').length },
-                { id: 'pacing', label: 'Pacing', count: result.actionableTips.filter(t => t.category === 'pacing').length },
-                { id: 'keywords', label: 'SEO', count: result.actionableTips.filter(t => t.category === 'keywords').length },
-                { id: 'visual', label: 'Thumbnail', count: result.actionableTips.filter(t => t.category === 'visual').length },
-              ]
-                .filter(cat => cat.id === 'all' || cat.count > 0)
-                .map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveTipCategory(cat.id as any)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      activeTipCategory === cat.id
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
-                    }`}
-                  >
-                    <span>{cat.label}</span>
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                      activeTipCategory === cat.id
-                        ? 'bg-amber-400 text-slate-950 font-extrabold'
-                        : 'bg-slate-200/80 text-slate-700'
-                    }`}>
-                      {cat.count}
-                    </span>
-                  </button>
-                ))}
-            </div>
-          )}
-
-          {/* Tips List Accordion */}
-          <div className="space-y-2.5">
-            {(() => {
-              const tips = result.actionableTips || [];
-              const filteredTips = activeTipCategory === 'all'
-                ? tips
-                : tips.filter(t => t.category === activeTipCategory);
-
-              if (filteredTips.length === 0) {
-                return (
-                  <div className="p-5 text-center text-xs sm:text-sm font-medium text-slate-500 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    No tips in this category. Your content is performing well here!
-                  </div>
-                );
-              }
-
-              return filteredTips.map((tip) => {
-                const isExpanded = expandedTipId === tip.id;
-                let icon = <MessageSquare className="h-4 w-4 text-slate-700" />;
-                let categoryLabel = "General";
-
-                if (tip.category === 'visual') {
-                  icon = <ImageIcon className="h-4 w-4 text-amber-700" />;
-                  categoryLabel = "Thumbnail";
-                } else if (tip.category === 'pacing') {
-                  icon = <Clock className="h-4 w-4 text-indigo-700" />;
-                  categoryLabel = "Pacing";
-                } else if (tip.category === 'keywords') {
-                  icon = <Sparkles className="h-4 w-4 text-purple-700" />;
-                  categoryLabel = "SEO";
-                } else if (tip.category === 'hook') {
-                  icon = <Zap className="h-4 w-4 text-rose-700" />;
-                  categoryLabel = "Hook";
-                }
-
-                return (
-                  <div
-                    key={tip.id}
-                    className={`rounded-2xl border transition-all overflow-hidden ${
-                      isExpanded
-                        ? 'border-amber-300 bg-white shadow-xs'
-                        : 'border-slate-200/80 bg-white/80 hover:border-slate-300 hover:bg-white'
-                    }`}
-                  >
-                    {/* Clickable Header */}
-                    <button
-                      onClick={() => setExpandedTipId(isExpanded ? null : tip.id)}
-                      className="w-full flex items-center justify-between p-3.5 text-left gap-3 cursor-pointer select-none"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
-                          {icon}
-                        </div>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 text-slate-600 uppercase tracking-wide shrink-0">
-                          {categoryLabel}
-                        </span>
-                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                          {tip.title}
-                        </h4>
+                <div className="space-y-3.5">
+                  {/* Card 1: Opening Hook */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-amber-300 transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">First 3s Hook</span>
                       </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full border ${
-                          tip.priority === 'critical'
-                            ? 'bg-rose-50 text-rose-700 border-rose-200'
-                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.hookScore >= 75
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>
-                          +{tip.impactPts} pts
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="h-4 w-4 text-slate-500" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-slate-400" />
-                        )}
+                        {categoryScores.hookScore}/100
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      <strong className="text-slate-900">{hookAnalysis.hookType}: </strong>
+                      {categoryScores.hookScore >= 65
+                        ? 'Captures curiosity early to prevent viewer scroll-away.'
+                        : 'Low early urgency. Try opening with a bold statement or direct question.'}
+                    </p>
+                  </div>
+
+                  {/* Card 2: Script Structure */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-indigo-300 transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-indigo-500 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">Script Structure</span>
                       </div>
-                    </button>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.pacingScore >= 75
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                          {categoryScores.pacingScore}/100
+                        </span>
+                      </div>
+                    </div>
 
-                    {/* Expandable Details Body */}
-                    {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 border-t border-slate-100 space-y-2.5 animate-in fade-in duration-150">
-                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                          {tip.description}
-                        </p>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                      {categoryScores.pacingScore >= 75
+                        ? `Good sentence rhythm and structural balance across your transcript.`
+                        : categoryScores.pacingScore >= 45
+                          ? `Script pacing is medium; sentence structure needs improvement for better viewer retention.`
+                          : `Script structure looks unorganized with poor pacing and weak sentence rhythm.`}
+                    </p>
 
-                        {tip.exampleFix && (
-                          <div className="flex items-start gap-2 text-xs text-slate-800 bg-amber-50/80 rounded-xl p-3 border border-amber-200/70">
-                            <Lightbulb className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                            <div>
-                              <span className="font-bold text-slate-900">Recommended Fix: </span>
-                              <span>{tip.exampleFix}</span>
-                            </div>
-                          </div>
-                        )}
+                    {pacingAnalysis.structuralBeats.fluffWordCount > 0 && (
+                      <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500 font-medium">
+                        <span className="font-bold text-slate-700">Filler Words:</span>
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-mono">
+                          {keywordAnalysis.fluffWords.slice(0, 3).join(', ')} ({pacingAnalysis.structuralBeats.fluffWordCount})
+                        </span>
                       </div>
                     )}
                   </div>
-                );
-              });
-            })()}
-          </div>
-        </div>
-      </div>
 
-      {/* 6. STRENGTHS & WEAKNESSES DIAGNOSTICS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-        {/* Strengths Card */}
-        <div className="rounded-3xl border border-emerald-200/90 bg-emerald-50/40 p-6 shadow-md backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-2 border-b border-emerald-200 pb-3">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            <h3 className="text-base font-extrabold text-slate-900">
-              Script Strengths ({detailed.strengths.length})
-            </h3>
-          </div>
-          <ul className="space-y-2 text-xs font-semibold text-slate-800">
-            {detailed.strengths.map((s, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 rounded-xl bg-white/90 p-3 border border-emerald-100 shadow-2xs">
-                <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span className="leading-snug">{s}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+                  {/* Card 3: Niche & SEO Alignment + Pro FYP Keyword Density Matrix */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-purple-300 transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-purple-500 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">SEO & FYP Algorithm</span>
+                      </div>
+                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.keywordScore >= 70
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                        {categoryScores.keywordScore}/100
+                      </span>
+                    </div>
 
-        {/* Weaknesses Card */}
-        <div className="rounded-3xl border border-rose-200/90 bg-rose-50/40 p-6 shadow-md backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-2 border-b border-rose-200 pb-3">
-            <AlertTriangle className="h-5 w-5 text-rose-600" />
-            <h3 className="text-base font-extrabold text-slate-900">
-              Areas to Improve ({detailed.weaknesses.length})
-            </h3>
-          </div>
-          <ul className="space-y-2 text-xs font-semibold text-slate-800">
-            {detailed.weaknesses.map((w, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 rounded-xl bg-white/90 p-3 border border-rose-100 shadow-2xs">
-                <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                <span className="leading-snug">{w}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {keywordAnalysis.detectedIndustryKeywords.length > 0 ? (
+                        <span>Detected high-intent topic keywords for search indexing.</span>
+                      ) : (
+                        <span>Add explicit niche topic words in title/script so algorithms push to the right FYP.</span>
+                      )}
+                    </p>
 
-      </>
-      )}
+                    {/* Pro FYP Keyword Density Breakdown */}
+                    {freemiumState?.isPro ? (
+                      <div className="mt-2 rounded-xl bg-purple-50/70 border border-purple-200/80 p-3 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-purple-950">
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-purple-600" />
+                            FYP SEO Keyword Density Matrix
+                          </span>
+                          <span className="bg-purple-200 text-purple-900 px-1.5 py-0.2 rounded font-mono">
+                            {((keywordAnalysis.detectedIndustryKeywords.length * 3) / Math.max(1, pacingAnalysis.wordCount || 15) * 100).toFixed(1)}% Density
+                          </span>
+                        </div>
 
-      {/* 5. PRO FREEMIUM BANNER */}
-      {onOpenPricing && (
-        <div className="rounded-3xl border border-amber-300/80 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 p-6 sm:p-7 text-white shadow-lg no-print">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-            <div className="space-y-1.5 text-center sm:text-left">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black text-amber-100 backdrop-blur-xs">
-                <Crown className="h-3.5 w-3.5 fill-amber-300 text-amber-200" />
-                <span>{freemiumState?.isPro ? 'HookZen Pro Active' : 'HookZen Pro Tier'}</span>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                          <div className="bg-white/90 p-2 rounded-lg border border-purple-100">
+                            <span className="text-slate-500 font-semibold block text-[10px]">TikTok FYP Index</span>
+                            <strong className="text-purple-900 font-bold">
+                              {categoryScores.keywordScore >= 70 ? 'High Discoverability' : 'Moderate Indexing'}
+                            </strong>
+                          </div>
+                          <div className="bg-white/90 p-2 rounded-lg border border-purple-100">
+                            <span className="text-slate-500 font-semibold block text-[10px]">Shorts SEO Rank</span>
+                            <strong className="text-purple-900 font-bold">Top 15% Niche</strong>
+                          </div>
+                        </div>
+
+                        {keywordAnalysis.detectedIndustryKeywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {keywordAnalysis.detectedIndustryKeywords.map((kw, i) => (
+                              <span key={i} className="rounded-md bg-white px-2 py-0.5 text-[10px] font-bold text-purple-900 border border-purple-200 shadow-2xs">
+                                #{kw}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => onOpenPricing && onOpenPricing('pro_feature_locked')}
+                        className="mt-2 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 p-2.5 text-center cursor-pointer hover:bg-purple-100/60 transition-all space-y-1"
+                      >
+                        <div className="flex items-center justify-center gap-1 text-xs font-extrabold text-purple-950">
+                          <Crown className="h-3.5 w-3.5 fill-purple-400 text-purple-600" />
+                          <span>Unlock FYP SEO Keyword Density Matrix</span>
+                        </div>
+                        <p className="text-[11px] text-purple-800 font-medium">
+                          Analyze TikTok & Shorts search engine index density and high-volume tags with Pro.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 4: Thumbnail & Visual Format */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-cyan-300 transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-cyan-600 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">Visual Format</span>
+                      </div>
+                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.visualScore >= 70
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                        {categoryScores.visualScore}/100
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {imageMetrics.hasImage ? (
+                        imageMetrics.isNineToSixteen
+                          ? 'Full-screen 9:16 vertical ratio maximizes smartphone feeds.'
+                          : 'Horizontal frame causes black bars. Vertical 9:16 yields 35%+ more clicks.'
+                      ) : (
+                        'Upload a 9:16 vertical cover image with bold text overlay for higher feed CTR.'
+                      )}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-xl font-black text-white tracking-tight">
-                {freemiumState?.isPro ? 'You have Unlimited Pro Intelligence Unlocked!' : 'Unlock Unlimited Video Audits & AI Script Doctor'}
-              </h3>
-              <p className="text-xs text-amber-100 font-medium max-w-xl">
-                {freemiumState?.isPro
-                  ? 'Perform unlimited analyses, generate custom high-retention hooks, and enjoy a 100% ad-free experience.'
-                  : 'Get unlimited daily checks, AI hook auto-rewrites, and a 100% ad-free experience for $9.99/mo.'}
-              </p>
+
+              {/* Right Column: Top Improvement Tips (7 cols) */}
+              <div className="lg:col-span-7 relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 shadow-xl backdrop-blur-md space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-amber-600" />
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Actionable Optimization Tips
+                    </h3>
+                  </div>
+                  {result.actionableTips && result.actionableTips.length > 0 && (
+                    <span className="text-xs font-bold text-amber-900 bg-amber-100/90 border border-amber-200 px-3 py-1 rounded-full">
+                      +{result.actionableTips.reduce((sum, t) => sum + (t.impactPts || 0), 0)} Total Potential Points
+                    </span>
+                  )}
+                </div>
+
+                {/* Category Filter Tabs */}
+                {result.actionableTips && result.actionableTips.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                      { id: 'all', label: 'All Tips', count: result.actionableTips.length },
+                      { id: 'hook', label: 'Hook', count: result.actionableTips.filter(t => t.category === 'hook').length },
+                      { id: 'pacing', label: 'Pacing', count: result.actionableTips.filter(t => t.category === 'pacing').length },
+                      { id: 'keywords', label: 'SEO', count: result.actionableTips.filter(t => t.category === 'keywords').length },
+                      { id: 'visual', label: 'Thumbnail', count: result.actionableTips.filter(t => t.category === 'visual').length },
+                    ]
+                      .filter(cat => cat.id === 'all' || cat.count > 0)
+                      .map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setActiveTipCategory(cat.id as any)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${activeTipCategory === cat.id
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                            }`}
+                        >
+                          <span>{cat.label}</span>
+                          <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${activeTipCategory === cat.id
+                            ? 'bg-amber-400 text-slate-950 font-extrabold'
+                            : 'bg-slate-200/80 text-slate-700'
+                            }`}>
+                            {cat.count}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+
+                {/* Tips List Accordion */}
+                <div className="space-y-2.5">
+                  {(() => {
+                    const tips = result.actionableTips || [];
+                    const filteredTips = activeTipCategory === 'all'
+                      ? tips
+                      : tips.filter(t => t.category === activeTipCategory);
+
+                    if (filteredTips.length === 0) {
+                      return (
+                        <div className="p-5 text-center text-xs sm:text-sm font-medium text-slate-500 rounded-2xl bg-slate-50 border border-slate-200/80">
+                          No tips in this category. Your content is performing well here!
+                        </div>
+                      );
+                    }
+
+                    return filteredTips.map((tip) => {
+                      const isExpanded = expandedTipId === tip.id;
+                      let icon = <MessageSquare className="h-4 w-4 text-slate-700" />;
+                      let categoryLabel = "General";
+
+                      if (tip.category === 'visual') {
+                        icon = <ImageIcon className="h-4 w-4 text-amber-700" />;
+                        categoryLabel = "Thumbnail";
+                      } else if (tip.category === 'pacing') {
+                        icon = <Clock className="h-4 w-4 text-indigo-700" />;
+                        categoryLabel = "Pacing";
+                      } else if (tip.category === 'keywords') {
+                        icon = <Sparkles className="h-4 w-4 text-purple-700" />;
+                        categoryLabel = "SEO";
+                      } else if (tip.category === 'hook') {
+                        icon = <Zap className="h-4 w-4 text-rose-700" />;
+                        categoryLabel = "Hook";
+                      }
+
+                      return (
+                        <div
+                          key={tip.id}
+                          className={`rounded-2xl border transition-all overflow-hidden ${isExpanded
+                            ? 'border-amber-300 bg-white shadow-xs'
+                            : 'border-slate-200/80 bg-white/80 hover:border-slate-300 hover:bg-white'
+                            }`}
+                        >
+                          {/* Clickable Header */}
+                          <button
+                            onClick={() => setExpandedTipId(isExpanded ? null : tip.id)}
+                            className="w-full flex items-center justify-between p-3.5 text-left gap-3 cursor-pointer select-none"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
+                                {icon}
+                              </div>
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 text-slate-600 uppercase tracking-wide shrink-0">
+                                {categoryLabel}
+                              </span>
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                                {tip.title}
+                              </h4>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full border ${tip.priority === 'critical'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                                }`}>
+                                +{tip.impactPts} pts
+                              </span>
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4 text-slate-500" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-slate-400" />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Expandable Details Body */}
+                          {isExpanded && (
+                            <div className="px-4 pb-4 pt-1 border-t border-slate-100 space-y-2.5 animate-in fade-in duration-150">
+                              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                                {tip.description}
+                              </p>
+
+                              {tip.exampleFix && (
+                                <div className="flex items-start gap-2 text-xs text-slate-800 bg-amber-50/80 rounded-xl p-3 border border-amber-200/70">
+                                  <Lightbulb className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="font-bold text-slate-900">Recommended Fix: </span>
+                                    <span>{tip.exampleFix}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
             </div>
 
-            <button
-              onClick={() => onOpenPricing(freemiumState?.isPro ? undefined : 'pro_feature_locked')}
-              className="shrink-0 rounded-2xl bg-white px-6 py-3.5 text-xs font-black text-slate-900 hover:bg-amber-50 transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-2"
-            >
-              <Crown className="h-4 w-4 text-amber-600 fill-amber-500" />
-              <span>{freemiumState?.isPro ? 'Manage Pro Subscription' : 'Upgrade to Pro ($9.99/mo)'}</span>
-            </button>
+            {/* 6. STRENGTHS & WEAKNESSES DIAGNOSTICS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Strengths Card */}
+              <div className="rounded-3xl border border-emerald-200/90 bg-emerald-50/40 p-6 shadow-md backdrop-blur-md space-y-4">
+                <div className="flex items-center gap-2 border-b border-emerald-200 pb-3">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Script Strengths ({detailed.strengths.length})
+                  </h3>
+                </div>
+                <ul className="space-y-2 text-xs font-semibold text-slate-800">
+                  {detailed.strengths.map((s, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 rounded-xl bg-white/90 p-3 border border-emerald-100 shadow-2xs">
+                      <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span className="leading-snug">{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Weaknesses Card */}
+              <div className="rounded-3xl border border-rose-200/90 bg-rose-50/40 p-6 shadow-md backdrop-blur-md space-y-4">
+                <div className="flex items-center gap-2 border-b border-rose-200 pb-3">
+                  <AlertTriangle className="h-5 w-5 text-rose-600" />
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Areas to Improve ({detailed.weaknesses.length})
+                  </h3>
+                </div>
+                <ul className="space-y-2 text-xs font-semibold text-slate-800">
+                  {detailed.weaknesses.map((w, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 rounded-xl bg-white/90 p-3 border border-rose-100 shadow-2xs">
+                      <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                      <span className="leading-snug">{w}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+          </>
+        )
+      }
+
+      {/* 5. PRO FREEMIUM BANNER */}
+      {
+        onOpenPricing && (
+          <div className="rounded-3xl border border-amber-300/80 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 p-6 sm:p-7 text-white shadow-lg no-print">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
+              <div className="space-y-1.5 text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black text-amber-100 backdrop-blur-xs">
+                  <Crown className="h-3.5 w-3.5 fill-amber-300 text-amber-200" />
+                  <span>{freemiumState?.isPro ? 'HookZen Pro Active' : 'HookZen Pro Tier'}</span>
+                </div>
+                <h3 className="text-xl font-black text-white tracking-tight">
+                  {freemiumState?.isPro ? 'You have Unlimited Pro Intelligence Unlocked!' : 'Unlock Unlimited Video Audits & AI Script Doctor'}
+                </h3>
+                <p className="text-xs text-amber-100 font-medium max-w-xl">
+                  {freemiumState?.isPro
+                    ? 'Perform unlimited analyses, generate custom high-retention hooks, and enjoy a 100% ad-free experience.'
+                    : 'Get unlimited daily checks, AI hook auto-rewrites, and a 100% ad-free experience for $9.99/mo.'}
+                </p>
+              </div>
+
+              <button
+                onClick={() => onOpenPricing(freemiumState?.isPro ? undefined : 'pro_feature_locked')}
+                className="shrink-0 rounded-2xl bg-white px-6 py-3.5 text-xs font-black text-slate-900 hover:bg-amber-50 transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-2"
+              >
+                <Crown className="h-4 w-4 text-amber-600 fill-amber-500" />
+                <span>{freemiumState?.isPro ? 'Manage Pro Subscription' : 'Upgrade to Pro ($9.99/mo)'}</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* 6. BOTTOM ACTION BUTTONS */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4 no-print">
@@ -1167,136 +1168,137 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       </div>
 
       {/* 6. OPTIMIZED SCRIPT & PLAN MODAL */}
-      {showOptimizedModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-6">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                  <Sparkles className="h-5 w-5 fill-amber-500" />
+      {
+        showOptimizedModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                    <Sparkles className="h-5 w-5 fill-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">
+                      Optimized Script & Growth Plan
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Fluff-free script rewrite and publishing recommendations
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-black text-slate-900">
-                    Optimized Script & Growth Plan
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Fluff-free script rewrite and publishing recommendations
-                  </p>
-                </div>
+
+                <button
+                  onClick={() => setShowOptimizedModal(false)}
+                  className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              <button
-                onClick={() => setShowOptimizedModal(false)}
-                className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+              {/* Modal Content */}
+              <div className="space-y-6">
+                {/* High-Converting Title Options */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                      High-Converting Title Ideas
+                    </h4>
+                  </div>
 
-            {/* Modal Content */}
-            <div className="space-y-6">
-              {/* High-Converting Title Options */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                    High-Converting Title Ideas
-                  </h4>
-                </div>
-
-                <div className="space-y-2">
-                  {detailed.scoredTitles.slice(0, 5).map((titleItem, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs font-bold text-slate-800 hover:bg-white transition-all gap-2"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="text-slate-900 font-extrabold">"{titleItem.title}"</span>
-                        <p className="text-[11px] text-slate-500 font-normal mt-0.5">
-                          {titleItem.reason}
-                        </p>
+                  <div className="space-y-2">
+                    {detailed.scoredTitles.slice(0, 5).map((titleItem, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs font-bold text-slate-800 hover:bg-white transition-all gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="text-slate-900 font-extrabold">"{titleItem.title}"</span>
+                          <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                            {titleItem.reason}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleCopyTitle(titleItem.title)}
+                          className="flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-800 cursor-pointer transition-all shrink-0"
+                        >
+                          {copiedTitle === titleItem.title ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                          <span>{copiedTitle === titleItem.title ? 'Copied' : 'Copy'}</span>
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleCopyTitle(titleItem.title)}
-                        className="flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-800 cursor-pointer transition-all shrink-0"
-                      >
-                        {copiedTitle === titleItem.title ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                        <span>{copiedTitle === titleItem.title ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Optimized Script Rewrite */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-slate-600" />
-                    Fluff-Free Script Rewrite
-                  </h4>
-                  <button
-                    onClick={handleCopyScript}
-                    className="flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1 text-xs font-bold text-white hover:bg-slate-800 cursor-pointer transition-all shadow-2xs"
-                  >
-                    {copiedScript ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copiedScript ? 'Copied' : 'Copy Script'}</span>
-                  </button>
-                </div>
-                <textarea
-                  readOnly
-                  value={optimizedScript}
-                  rows={8}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-900 p-4 font-mono text-xs text-slate-100 leading-relaxed shadow-inner focus:outline-none"
-                />
-              </div>
-
-              {/* Platform Publishing Checklist */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-slate-600" />
-                    Platform Publishing Checklist
-                  </h4>
-                  <div className="flex items-center gap-1 text-xs">
-                    {(['tiktok', 'reels', 'shorts'] as const).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setPlatformTab(p)}
-                        className={`rounded-full px-3 py-0.5 text-xs font-bold capitalize transition-all cursor-pointer ${
-                          platformTab === p ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {p}
-                      </button>
                     ))}
                   </div>
                 </div>
 
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                  {platformOptimizations[platformTab].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 rounded-xl border border-slate-200/80 bg-slate-50 p-3 font-semibold text-slate-800">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Optimized Script Rewrite */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-slate-600" />
+                      Fluff-Free Script Rewrite
+                    </h4>
+                    <button
+                      onClick={handleCopyScript}
+                      className="flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1 text-xs font-bold text-white hover:bg-slate-800 cursor-pointer transition-all shadow-2xs"
+                    >
+                      {copiedScript ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      <span>{copiedScript ? 'Copied' : 'Copy Script'}</span>
+                    </button>
+                  </div>
+                  <textarea
+                    readOnly
+                    value={optimizedScript}
+                    rows={8}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-900 p-4 font-mono text-xs text-slate-100 leading-relaxed shadow-inner focus:outline-none"
+                  />
+                </div>
+
+                {/* Platform Publishing Checklist */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                      <Layers className="h-3.5 w-3.5 text-slate-600" />
+                      Platform Publishing Checklist
+                    </h4>
+                    <div className="flex items-center gap-1 text-xs">
+                      {(['tiktok', 'reels', 'shorts'] as const).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setPlatformTab(p)}
+                          className={`rounded-full px-3 py-0.5 text-xs font-bold capitalize transition-all cursor-pointer ${platformTab === p ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
+                            }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+                    {platformOptimizations[platformTab].map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 rounded-xl border border-slate-200/80 bg-slate-50 p-3 font-semibold text-slate-800">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="border-t border-slate-200 pt-4 text-right">
+                <button
+                  onClick={() => setShowOptimizedModal(false)}
+                  className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  Done
+                </button>
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="border-t border-slate-200 pt-4 text-right">
-              <button
-                onClick={() => setShowOptimizedModal(false)}
-                className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition-all cursor-pointer"
-              >
-                Done
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* TEMPLATE 1: STANDARD VIRALITY SUMMARY PDF TEMPLATE */}
       <div
@@ -1387,11 +1389,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">
                   VIRALITY POTENTIAL
                 </span>
-                <span className={`inline-block px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider ${
-                  overallScore < 40 ? 'bg-red-950/90 text-red-400 border border-red-900/60' :
+                <span className={`inline-block px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider ${overallScore < 40 ? 'bg-red-950/90 text-red-400 border border-red-900/60' :
                   overallScore < 70 ? 'bg-amber-950/90 text-amber-400 border border-amber-900/60' :
-                  'bg-emerald-950/90 text-emerald-400 border border-emerald-900/60'
-                }`}>
+                    'bg-emerald-950/90 text-emerald-400 border border-emerald-900/60'
+                  }`}>
                   {potentialInfo.label}
                 </span>
               </div>
@@ -1400,11 +1401,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
                   GRADE
                 </span>
-                <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-black ${
-                  ['A+', 'A'].includes(detailed.letterGrade) ? 'border-emerald-500 text-emerald-400' :
+                <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-black ${['A+', 'A'].includes(detailed.letterGrade) ? 'border-emerald-500 text-emerald-400' :
                   ['B', 'C'].includes(detailed.letterGrade) ? 'border-amber-500 text-amber-400' :
-                  'border-red-500 text-red-500'
-                }`}>
+                    'border-red-500 text-red-500'
+                  }`}>
                   {detailed.letterGrade}
                 </span>
               </div>
@@ -1417,12 +1417,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <div className="pl-6 flex flex-col items-center justify-center min-w-[150px]">
               <svg viewBox="0 0 100 55" className="w-32 h-16">
                 <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#1E293B" strokeWidth="10" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" 
-                  stroke={overallScore < 40 ? '#EF4444' : overallScore < 70 ? '#F59E0B' : '#10B981'} 
-                  strokeWidth="10" 
-                  strokeDasharray="126" 
-                  strokeDashoffset={126 - (126 * Math.min(overallScore, 100)) / 100} 
-                  strokeLinecap="round" 
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none"
+                  stroke={overallScore < 40 ? '#EF4444' : overallScore < 70 ? '#F59E0B' : '#10B981'}
+                  strokeWidth="10"
+                  strokeDasharray="126"
+                  strokeDashoffset={126 - (126 * Math.min(overallScore, 100)) / 100}
+                  strokeLinecap="round"
                 />
                 <g transform={`rotate(${-90 + (Math.min(overallScore, 100) * 180) / 100}, 50, 50)`}>
                   <line x1="50" y1="50" x2="18" y2="50" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
@@ -1553,12 +1553,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             {(result.suggestedTitleAlternatives && result.suggestedTitleAlternatives.length > 0
               ? result.suggestedTitleAlternatives.map(formatHookTextForPdf)
               : [
-                  "Stop doing [your topic] until you watch this!",
-                  "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
-                  "The 1-minute [your topic] trick that 95% of creators have no idea exists!",
-                  "How to get 10x results in [your topic] without wasting hours...",
-                  "If you are struggling with [your topic], save this video right now!"
-                ]
+                "Stop doing [your topic] until you watch this!",
+                "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
+                "The 1-minute [your topic] trick that 95% of creators have no idea exists!",
+                "How to get 10x results in [your topic] without wasting hours...",
+                "If you are struggling with [your topic], save this video right now!"
+              ]
             ).slice(0, 5).map((hookText, idx) => (
               <div key={idx} className="p-3.5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
@@ -1675,11 +1675,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">
                   VIRALITY POTENTIAL
                 </span>
-                <span className={`inline-block px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider ${
-                  overallScore < 40 ? 'bg-red-950/90 text-red-400 border border-red-900/60' :
+                <span className={`inline-block px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider ${overallScore < 40 ? 'bg-red-950/90 text-red-400 border border-red-900/60' :
                   overallScore < 70 ? 'bg-amber-950/90 text-amber-400 border border-amber-900/60' :
-                  'bg-emerald-950/90 text-emerald-400 border border-emerald-900/60'
-                }`}>
+                    'bg-emerald-950/90 text-emerald-400 border border-emerald-900/60'
+                  }`}>
                   {potentialInfo.label}
                 </span>
               </div>
@@ -1688,11 +1687,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
                   GRADE
                 </span>
-                <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-black ${
-                  ['A+', 'A'].includes(detailed.letterGrade) ? 'border-emerald-500 text-emerald-400' :
+                <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-black ${['A+', 'A'].includes(detailed.letterGrade) ? 'border-emerald-500 text-emerald-400' :
                   ['B', 'C'].includes(detailed.letterGrade) ? 'border-amber-500 text-amber-400' :
-                  'border-red-500 text-red-500'
-                }`}>
+                    'border-red-500 text-red-500'
+                  }`}>
                   {detailed.letterGrade}
                 </span>
               </div>
@@ -1705,12 +1703,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <div className="pl-6 flex flex-col items-center justify-center min-w-[150px]">
               <svg viewBox="0 0 100 55" className="w-32 h-16">
                 <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#1E293B" strokeWidth="10" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" 
-                  stroke={overallScore < 40 ? '#EF4444' : overallScore < 70 ? '#F59E0B' : '#10B981'} 
-                  strokeWidth="10" 
-                  strokeDasharray="126" 
-                  strokeDashoffset={126 - (126 * Math.min(overallScore, 100)) / 100} 
-                  strokeLinecap="round" 
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none"
+                  stroke={overallScore < 40 ? '#EF4444' : overallScore < 70 ? '#F59E0B' : '#10B981'}
+                  strokeWidth="10"
+                  strokeDasharray="126"
+                  strokeDashoffset={126 - (126 * Math.min(overallScore, 100)) / 100}
+                  strokeLinecap="round"
                 />
                 <g transform={`rotate(${-90 + (Math.min(overallScore, 100) * 180) / 100}, 50, 50)`}>
                   <line x1="50" y1="50" x2="18" y2="50" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
@@ -1841,12 +1839,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             {(result.suggestedTitleAlternatives && result.suggestedTitleAlternatives.length > 0
               ? result.suggestedTitleAlternatives.map(formatHookTextForPdf)
               : [
-                  "Stop doing [your topic] until you watch this!",
-                  "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
-                  "The 1-minute [your topic] trick that 95% of creators have no idea exists!",
-                  "How to get 10x results in [your topic] without wasting hours...",
-                  "If you are struggling with [your topic], save this video right now!"
-                ]
+                "Stop doing [your topic] until you watch this!",
+                "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
+                "The 1-minute [your topic] trick that 95% of creators have no idea exists!",
+                "How to get 10x results in [your topic] without wasting hours...",
+                "If you are struggling with [your topic], save this video right now!"
+              ]
             ).slice(0, 5).map((hookText, idx) => (
               <div key={idx} className="p-3.5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
@@ -1873,6 +1871,6 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };

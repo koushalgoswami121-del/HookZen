@@ -1,5 +1,6 @@
 import {
   getPublicIp,
+  getDeviceFingerprint,
   fetchIpUsageFromFirestore,
   saveIpUsageToFirestore,
 } from '../lib/firebase';
@@ -9,6 +10,7 @@ export interface FreemiumState {
   planType?: 'free' | 'monthly' | 'annual' | 'lifetime';
   dailyCreditsUsed: number;
   maxFreeDailyCredits: number;
+  bonusCredits?: number;
   lastResetDate: string; // YYYY-MM-DD
 }
 
@@ -45,7 +47,7 @@ export function getFreemiumState(): FreemiumState {
     if (!parsed.planType) {
       parsed.planType = parsed.isPro ? 'lifetime' : 'free';
     }
-    
+
     // Check if a new day has started
     if (parsed.lastResetDate !== today) {
       parsed.dailyCreditsUsed = 0;
@@ -73,26 +75,40 @@ export function saveFreemiumState(state: FreemiumState): void {
   }
 }
 
-// Asynchronously sync credits used by IP address from Firestore
-export async function checkAndSyncIpCredits(): Promise<FreemiumState> {
+// Asynchronously sync credits used by IP address from Firestore (bypassed for logged-in users)
+export async function checkAndSyncIpCredits(isUserLoggedIn = false): Promise<FreemiumState> {
   const currentState = getFreemiumState();
   if (currentState.isPro) return currentState;
 
+  // If the user is logged into an account, we do not restrict them by the IP address.
+  // Their account's cloud balance is their unique source of truth.
+  if (isUserLoggedIn) return currentState;
+
   try {
     const ip = await getPublicIp();
+    const fp = getDeviceFingerprint();
     const today = getTodayDateString();
-    const ipRecord = await fetchIpUsageFromFirestore(ip);
 
+    // Check both vectors in parallel
+    const [ipRecord, fpRecord] = await Promise.all([
+      fetchIpUsageFromFirestore(ip),
+      fetchIpUsageFromFirestore(fp)
+    ]);
+
+    let highestUsed = currentState.dailyCreditsUsed;
     if (ipRecord && ipRecord.lastResetDate === today) {
-      // Enforce the maximum credits used across local and IP history
-      const highestUsed = Math.max(currentState.dailyCreditsUsed, ipRecord.dailyCreditsUsed);
-      if (highestUsed !== currentState.dailyCreditsUsed) {
-        currentState.dailyCreditsUsed = highestUsed;
-        saveFreemiumState(currentState);
-      }
+      highestUsed = Math.max(highestUsed, ipRecord.dailyCreditsUsed);
+    }
+    if (fpRecord && fpRecord.lastResetDate === today) {
+      highestUsed = Math.max(highestUsed, fpRecord.dailyCreditsUsed);
+    }
+
+    if (highestUsed !== currentState.dailyCreditsUsed) {
+      currentState.dailyCreditsUsed = highestUsed;
+      saveFreemiumState(currentState);
     }
   } catch (err) {
-    console.warn('IP credit sync note:', err);
+    console.warn('Credits sync note:', err);
   }
 
   return currentState;
@@ -101,21 +117,25 @@ export async function checkAndSyncIpCredits(): Promise<FreemiumState> {
 export function getRemainingCredits(): number {
   const state = getFreemiumState();
   if (state.isPro) return Infinity;
-  return Math.max(0, state.maxFreeDailyCredits - state.dailyCreditsUsed);
+  return Math.max(0, (state.maxFreeDailyCredits + (state.bonusCredits || 0)) - state.dailyCreditsUsed);
 }
 
 export function useCredit(amount = CREDITS_PER_ANALYSIS): boolean {
   const state = getFreemiumState();
   if (state.isPro) return true; // Pro users have unlimited
-  if (state.maxFreeDailyCredits - state.dailyCreditsUsed >= amount) {
+  if ((state.maxFreeDailyCredits + (state.bonusCredits || 0)) - state.dailyCreditsUsed >= amount) {
     state.dailyCreditsUsed += amount;
     saveFreemiumState(state);
 
-    // Save credit usage to IP tracking in Firestore asynchronously
+    // Save credit usage to IP & Fingerprint tracking in Firestore asynchronously
     (async () => {
       try {
         const ip = await getPublicIp();
-        await saveIpUsageToFirestore(ip, state.dailyCreditsUsed, state.lastResetDate);
+        const fp = getDeviceFingerprint();
+        await Promise.all([
+          saveIpUsageToFirestore(ip, state.dailyCreditsUsed, state.lastResetDate),
+          saveIpUsageToFirestore(fp, state.dailyCreditsUsed, state.lastResetDate)
+        ]);
       } catch (e) {
         console.warn('Asynchronous IP credit save note:', e);
       }
@@ -132,14 +152,14 @@ export function toggleProStatus(
   force?: boolean
 ): FreemiumState {
   const state = getFreemiumState();
-  
+
   // Protect active Pro users from manual downgrade unless force flag is set
   if (state.isPro && enablePro === false && !force) {
     return state;
   }
 
   state.isPro = enablePro !== undefined ? enablePro : !state.isPro;
-  
+
   if (state.isPro) {
     state.planType = planType || (state.planType && state.planType !== 'free' ? state.planType : 'lifetime');
   } else {

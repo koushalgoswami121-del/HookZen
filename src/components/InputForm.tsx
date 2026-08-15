@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import {
   Upload,
   Image as ImageIcon,
@@ -41,17 +41,17 @@ const INDUSTRIES: {
   borderColor: string;
   ringColor: string;
 }[] = [
-  { id: 'tech', label: 'Tech', icon: Laptop, bgColor: 'bg-amber-500/10', textColor: 'text-amber-950 font-bold', borderColor: 'border-amber-400', ringColor: 'focus:ring-amber-300' },
-  { id: 'finance', label: 'Finance', icon: DollarSign, bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-950 font-bold', borderColor: 'border-emerald-400', ringColor: 'focus:ring-emerald-300' },
-  { id: 'fitness', label: 'Fitness', icon: Dumbbell, bgColor: 'bg-cyan-500/10', textColor: 'text-cyan-950 font-bold', borderColor: 'border-cyan-400', ringColor: 'focus:ring-cyan-300' },
-  { id: 'entertainment', label: 'Entertainment', icon: Film, bgColor: 'bg-purple-500/10', textColor: 'text-purple-950 font-bold', borderColor: 'border-purple-400', ringColor: 'focus:ring-purple-300' },
-  { id: 'beauty', label: 'Beauty', icon: Sparkles, bgColor: 'bg-rose-500/10', textColor: 'text-rose-950 font-bold', borderColor: 'border-rose-400', ringColor: 'focus:ring-rose-300' },
-  { id: 'education', label: 'Education', icon: BookOpen, bgColor: 'bg-indigo-500/10', textColor: 'text-indigo-950 font-bold', borderColor: 'border-indigo-400', ringColor: 'focus:ring-indigo-300' },
-  { id: 'gaming', label: 'Gaming', icon: Gamepad2, bgColor: 'bg-violet-500/10', textColor: 'text-violet-950 font-bold', borderColor: 'border-violet-400', ringColor: 'focus:ring-violet-300' },
-  { id: 'business', label: 'Business', icon: TrendingUp, bgColor: 'bg-blue-500/10', textColor: 'text-blue-950 font-bold', borderColor: 'border-blue-400', ringColor: 'focus:ring-blue-300' },
-  { id: 'storytelling', label: 'Storytelling', icon: Mic, bgColor: 'bg-pink-500/10', textColor: 'text-pink-950 font-bold', borderColor: 'border-pink-400', ringColor: 'focus:ring-pink-300' },
-  { id: 'lifestyle', label: 'Lifestyle', icon: Compass, bgColor: 'bg-orange-500/10', textColor: 'text-orange-950 font-bold', borderColor: 'border-orange-400', ringColor: 'focus:ring-orange-300' },
-];
+    { id: 'tech', label: 'Tech', icon: Laptop, bgColor: 'bg-amber-500/10', textColor: 'text-amber-950 font-bold', borderColor: 'border-amber-400', ringColor: 'focus:ring-amber-300' },
+    { id: 'finance', label: 'Finance', icon: DollarSign, bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-950 font-bold', borderColor: 'border-emerald-400', ringColor: 'focus:ring-emerald-300' },
+    { id: 'fitness', label: 'Fitness', icon: Dumbbell, bgColor: 'bg-cyan-500/10', textColor: 'text-cyan-950 font-bold', borderColor: 'border-cyan-400', ringColor: 'focus:ring-cyan-300' },
+    { id: 'entertainment', label: 'Entertainment', icon: Film, bgColor: 'bg-purple-500/10', textColor: 'text-purple-950 font-bold', borderColor: 'border-purple-400', ringColor: 'focus:ring-purple-300' },
+    { id: 'beauty', label: 'Beauty', icon: Sparkles, bgColor: 'bg-rose-500/10', textColor: 'text-rose-950 font-bold', borderColor: 'border-rose-400', ringColor: 'focus:ring-rose-300' },
+    { id: 'education', label: 'Education', icon: BookOpen, bgColor: 'bg-indigo-500/10', textColor: 'text-indigo-950 font-bold', borderColor: 'border-indigo-400', ringColor: 'focus:ring-indigo-300' },
+    { id: 'gaming', label: 'Gaming', icon: Gamepad2, bgColor: 'bg-violet-500/10', textColor: 'text-violet-950 font-bold', borderColor: 'border-violet-400', ringColor: 'focus:ring-violet-300' },
+    { id: 'business', label: 'Business', icon: TrendingUp, bgColor: 'bg-blue-500/10', textColor: 'text-blue-950 font-bold', borderColor: 'border-blue-400', ringColor: 'focus:ring-blue-300' },
+    { id: 'storytelling', label: 'Storytelling', icon: Mic, bgColor: 'bg-pink-500/10', textColor: 'text-pink-950 font-bold', borderColor: 'border-pink-400', ringColor: 'focus:ring-pink-300' },
+    { id: 'lifestyle', label: 'Lifestyle', icon: Compass, bgColor: 'bg-orange-500/10', textColor: 'text-orange-950 font-bold', borderColor: 'border-orange-400', ringColor: 'focus:ring-orange-300' },
+  ];
 
 const PLATFORMS: { id: PlatformType; label: string }[] = [
   { id: 'all', label: 'All Platforms' },
@@ -116,7 +116,7 @@ export const InputForm: React.FC<InputFormProps> = ({
     if (!title.trim() && !transcript.trim()) return;
 
     if (freemiumState && !freemiumState.isPro) {
-      const remaining = Math.max(0, freemiumState.maxFreeDailyCredits - freemiumState.dailyCreditsUsed);
+      const remaining = Math.max(0, freemiumState.maxFreeDailyCredits + (freemiumState.bonusCredits || 0) - freemiumState.dailyCreditsUsed);
       if (remaining <= 0) {
         if (onOpenPricing) onOpenPricing('limit_reached');
         return;
@@ -343,11 +343,10 @@ export const InputForm: React.FC<InputFormProps> = ({
                     key={secs}
                     type="button"
                     onClick={() => setLengthSeconds(secs)}
-                    className={`rounded-lg px-2 py-1 text-xs font-bold border transition-all cursor-pointer ${
-                      lengthSeconds === secs
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                        : 'bg-white/90 text-slate-700 border-slate-200 hover:bg-white hover:border-slate-300'
-                    }`}
+                    className={`rounded-lg px-2 py-1 text-xs font-bold border transition-all cursor-pointer ${lengthSeconds === secs
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                      : 'bg-white/90 text-slate-700 border-slate-200 hover:bg-white hover:border-slate-300'
+                      }`}
                   >
                     {secs}s
                   </button>
@@ -368,11 +367,10 @@ export const InputForm: React.FC<InputFormProps> = ({
                   key={plat.id}
                   type="button"
                   onClick={() => setTargetPlatform(plat.id)}
-                  className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
-                    targetPlatform === plat.id
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${targetPlatform === plat.id
+                    ? 'bg-white text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                 >
                   {plat.label}
                 </button>
@@ -382,28 +380,6 @@ export const InputForm: React.FC<InputFormProps> = ({
 
           {/* Action Group: Submit Button & Freemium Status */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 w-full sm:w-auto">
-            {freemiumState && onOpenPricing && (
-              <button
-                type="button"
-                onClick={() => onOpenPricing('limit_reached')}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer"
-                title="View Freemium & Pro Plans (50 credits refresh monthly)"
-              >
-                {freemiumState.isPro ? (
-                  <>
-                    <Crown className="h-3.5 w-3.5 text-amber-600 fill-amber-400" />
-                    <span>Pro Unlimited</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
-                    <span>
-                      {Math.max(0, freemiumState.maxFreeDailyCredits - freemiumState.dailyCreditsUsed)}/{freemiumState.maxFreeDailyCredits} Credits (Refresh monthly)
-                    </span>
-                  </>
-                )}
-              </button>
-            )}
 
             {/* Primary Gradient Submit Button */}
             <button
@@ -419,7 +395,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 text-amber-200 fill-amber-200" />
-                  <span>Analyse Viral Score (10 Credits)</span>
+                  <span>Analyse Viral Score</span>
                 </>
               )}
             </button>

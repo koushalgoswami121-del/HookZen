@@ -9,6 +9,9 @@ import {
   browserLocalPersistence,
   deleteUser,
   User,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth';
 import {
   initializeFirestore,
@@ -23,6 +26,7 @@ import {
   query,
   orderBy,
   deleteDoc,
+  onSnapshot,
 } from 'firebase/firestore';
 import firebaseConfigData from '../../firebase-applet-config.json';
 import { ViralScoreResult } from '../types';
@@ -147,10 +151,28 @@ export async function getPublicIp(): Promise<string> {
     }
   }
 
-  const fingerprint = `fp_${navigator.userAgent.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30)}_${screen.width}x${screen.height}`;
+  const fingerprint = getDeviceFingerprint();
   cachedIpAddress = fingerprint;
   return fingerprint;
 }
+
+export const getDeviceFingerprint = (): string => {
+  try {
+    const nav = window.navigator;
+    const components = [
+      nav.userAgent.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30),
+      nav.language || '',
+      nav.hardwareConcurrency || '',
+      screen.width,
+      screen.height,
+      screen.colorDepth,
+      new Date().getTimezoneOffset()
+    ];
+    return `fp_${components.join('_').replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  } catch (e) {
+    return `fp_fallback_${Math.random()}`;
+  }
+};
 
 export interface IpUsageRecord {
   dailyCreditsUsed: number;
@@ -172,7 +194,8 @@ export const fetchIpUsageFromFirestore = async (ip: string): Promise<IpUsageReco
     return null;
   })();
 
-  return withTimeout(fetchTask, 3000, null);
+  // Removed aggressive 3000ms timeout so heavy browsers/connections don't accidentally bypass the restriction
+  return withTimeout(fetchTask, 8000, null);
 };
 
 export const saveIpUsageToFirestore = async (
@@ -245,7 +268,68 @@ export const loginWithGoogle = async (): Promise<User | null> => {
   }
 };
 
+// Email Sign-Up Helper
+export const signUpWithEmail = async (email: string, password: string, displayName?: string): Promise<User | null> => {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  if (result.user && displayName) {
+    await updateProfile(result.user, { displayName });
+  }
+  if (result.user) {
+    const userRef = doc(db, 'users', result.user.uid);
+    await setDoc(userRef, {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: displayName || '',
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  }
+  return result.user;
+};
+
+// Email Sign-In Helper
+export const signInWithEmail = async (email: string, password: string): Promise<User | null> => {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
+};
+
 // Sign Out Helper
+export const logAuthError = async (error: any) => {
+  // Silent log
+};
+
+export interface FeedbackRecord {
+  id?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  uid?: string;
+  email?: string;
+}
+
+export const saveFeedbackToFirestore = async (feedback: FeedbackRecord) => {
+  try {
+    const feedbackRef = doc(collection(db, 'feedbacks'));
+    await setDoc(feedbackRef, {
+      ...feedback,
+      id: feedbackRef.id,
+      createdAt: new Date().toISOString()
+    });
+  } catch (err) {
+    console.warn('Failed to save feedback:', err);
+  }
+};
+
+export const fetchFeedbacksFromFirestore = async (): Promise<FeedbackRecord[]> => {
+  try {
+    const q = query(collection(db, 'feedbacks'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as FeedbackRecord);
+  } catch (err) {
+    console.warn('Failed to fetch feedbacks:', err);
+    return [];
+  }
+};
+
 export const logout = async (): Promise<void> => {
   try {
     await signOut(auth);
@@ -311,10 +395,14 @@ export const clearUserHistoryInFirestore = async (
 
 // User Profile & Freemium Cloud Sync Operations
 export interface CloudUserProfile {
+  uid?: string;
+  email?: string;
+  displayName?: string;
   isPro?: boolean;
   planType?: 'free' | 'monthly' | 'annual' | 'lifetime';
   pendingPlanType?: 'monthly' | 'annual' | 'lifetime';
   dailyCreditsUsed?: number;
+  bonusCredits?: number;
   lastResetDate?: string;
   updatedAt?: string;
 }
@@ -331,6 +419,7 @@ export const fetchUserProfileFromFirestore = async (
         isPro: data.isPro,
         planType: data.planType,
         dailyCreditsUsed: data.dailyCreditsUsed,
+        bonusCredits: data.bonusCredits,
         lastResetDate: data.lastResetDate,
       };
     }
@@ -338,6 +427,30 @@ export const fetchUserProfileFromFirestore = async (
   })();
 
   return withTimeout(fetchTask, 4000, null);
+};
+
+export const subscribeToUserProfile = (
+  userId: string,
+  callback: (profile: CloudUserProfile | null) => void
+): (() => void) => {
+  const userRef = doc(db, 'users', userId);
+  const unsubscribe = onSnapshot(userRef, (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      callback({
+        isPro: data.isPro,
+        planType: data.planType,
+        dailyCreditsUsed: data.dailyCreditsUsed,
+        bonusCredits: data.bonusCredits,
+        lastResetDate: data.lastResetDate,
+      });
+    } else {
+      callback(null);
+    }
+  }, (err) => {
+    console.warn('User profile listener error:', err);
+  });
+  return unsubscribe;
 };
 
 export const saveUserProfileToFirestore = async (
@@ -356,6 +469,23 @@ export const saveUserProfileToFirestore = async (
     );
   } catch (error) {
     console.warn('Failed to save user profile to Firestore:', error);
+  }
+};
+
+export const fetchAllUsersFromFirestore = async (): Promise<CloudUserProfile[]> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const snapshot = await getDocs(usersRef);
+    return snapshot.docs.map((d) => {
+      const data = d.data();
+      return {
+        uid: d.id,
+        ...data,
+      } as CloudUserProfile;
+    });
+  } catch (error) {
+    console.warn('Failed to fetch all users:', error);
+    return [];
   }
 };
 

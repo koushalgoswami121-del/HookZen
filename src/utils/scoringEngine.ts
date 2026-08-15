@@ -245,23 +245,24 @@ export async function calculateViralScore(
       id: 'hook-1',
       category: 'hook',
       title: hookAnalysis.overallHookScore <= 20 ? 'Script or Title is Too Short or Unclear' : 'Make the First 3 Seconds More Catchy & Curious',
+      problem: hookAnalysis.overallHookScore <= 20 ? 'The opening is too vague to capture viewer interest.' : 'The hook lacks a strong curiosity gap or pattern interrupt.',
       description: hookAnalysis.overallHookScore <= 20
         ? `Your title and opening scored ${hookAnalysis.overallHookScore}/100. People decide to keep watching in less than 2 seconds. Try using an intriguing question or bold opening line.`
-        : `Your opening hook scored ${hookAnalysis.overallHookScore}/100. Viewers decide to stay or scroll within 1.8 seconds. Start right away with a mystery or bold statement instead of a slow introduction.`,
+        : `Your opening hook scored ${hookAnalysis.overallHookScore}/100. Viewers decide to stay or scroll within 1.8 seconds. Start right away with a mystery or bold statement.`,
       priority: 'critical',
-      impactPts: 14,
+      impact: 'High',
     });
   }
 
-  // Script length tip if text is too sparse
   if (pacingResult.wordCount < 5) {
     actionableTips.push({
       id: 'pacing-0',
       category: 'pacing',
       title: 'Script is Too Short to Measure Pacing',
+      problem: 'The script lacks enough dialogue to analyze retention potential.',
       description: 'Your script has under 5 words. Great short videos usually have 50 to 120 words spoken clearly over 15 to 45 seconds.',
       priority: 'critical',
-      impactPts: 15,
+      impact: 'High',
     });
   }
 
@@ -269,11 +270,12 @@ export async function calculateViralScore(
     actionableTips.push({
       id: 'pacing-fluff',
       category: 'pacing',
-      title: `Remove ${pacingResult.structuralBeats.fluffWordCount} Filler Words`,
-      description: `We detected extra introductory words like "${keywordAnalysis.fluffWords.join(', ')}". Getting straight to the point keeps viewers watching up to 34% longer!`,
+      title: `Remove Filler Words`,
+      problem: `We detected extra introductory/filler words like "${keywordAnalysis.fluffWords.slice(0, 3).join(', ')}".`,
+      description: `Getting straight to the point prevents early viewer drop-off.`,
       exampleFix: 'Start immediately with the main idea or problem statement.',
       priority: 'high',
-      impactPts: 9,
+      impact: 'Medium',
     });
   }
 
@@ -282,24 +284,25 @@ export async function calculateViralScore(
     actionableTips.push({
       id: 'keyword-1',
       category: 'keywords',
-      title: `Add Popular ${industry.toUpperCase()} Words for Better Search Reach`,
-      description: `Social media apps analyze what you say to show your video to interested viewers. Include popular topic words in the first 5 seconds.`,
-      exampleFix: `Try mentioning terms like: ${INDUSTRY_KEYWORDS[industry]?.keywords.slice(0, 4).join(', ')}.`,
+      title: `Add Popular ${industry.toUpperCase()} Topic Words`,
+      problem: 'Script lacks clear niche identifiers for the algorithm to categorize it.',
+      description: `Social media apps analyze what you say to show your video to the right audience.`,
+      exampleFix: `Try mentioning defining terms like: ${INDUSTRY_KEYWORDS[industry]?.keywords.slice(0, 4).join(', ')}.`,
       priority: 'high',
-      impactPts: 10,
+      impact: 'Medium',
     });
   }
 
-  // Thumbnail & Visual Tips
   if (!imageMetrics.hasImage) {
     actionableTips.push({
       id: 'visual-upload',
       category: 'visual',
       title: 'Upload a Full Vertical (9:16) Cover Image',
-      description: 'You haven\'t uploaded a cover image yet. Short videos with a clear vertical cover image get up to 40% more clicks in feeds!',
-      exampleFix: 'Upload a clear vertical photo with large, easy-to-read text overlay.',
+      problem: 'Visual score unavailable — video or cover image not provided.',
+      description: 'Without visual data, we only evaluate your text/script. Upload a vertical thumbnail to get visual feedback.',
+      exampleFix: 'Upload a 9:16 vertical image with large, readable text overlay.',
       priority: 'high',
-      impactPts: 15,
+      impact: 'High',
     });
   } else {
     if (!imageMetrics.isNineToSixteen) {
@@ -307,9 +310,10 @@ export async function calculateViralScore(
         id: 'visual-1',
         category: 'visual',
         title: 'Use Full Screen Vertical Size (9:16 Ratio)',
-        description: 'Wide or square images show black bars on phone screens. Vertical full-screen images take up the whole display and look much more professional.',
+        problem: 'Image aspect ratio generates black bars on mobile platforms.',
+        description: 'Vertical full-screen images take up the whole display and feel native to short-form algorithms.',
         priority: 'critical',
-        impactPts: 15,
+        impact: 'High',
       });
     }
 
@@ -317,11 +321,12 @@ export async function calculateViralScore(
       actionableTips.push({
         id: 'visual-2',
         category: 'visual',
-        title: 'Make Your Cover Text & Image Brighter & Clearer',
-        description: `Your image clarity scored ${imageMetrics.contrastRatio}/100. Adding bright text with a dark outline makes your video stand out when people scroll past.`,
-        exampleFix: 'Add bright yellow or white text with a dark outline near the upper middle of the image.',
+        title: 'Increase Text Contrast & Brightness',
+        problem: 'Cover thumbnail lacks enough visual contrast, reducing scroll-stopping power.',
+        description: `Your contrast scored ${imageMetrics.contrastRatio}/100. High contrast elements perform better in dense social feeds.`,
+        exampleFix: 'Add bright yellow or white text with a dark drop-shadow layout.',
         priority: 'quick-win',
-        impactPts: 7,
+        impact: 'Medium',
       });
     }
   }
@@ -370,6 +375,10 @@ export async function calculateViralScore(
     timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
     input,
     overallScore,
+    contentScore: Math.min(100, Math.round(overallScore * 1.05)), // Higher raw quality estimate
+    viralPotential: overallScore, // Base projection
+    confidence: 'Medium',
+    modelVersion: 'v1.4',
     letterGrade,
     tier,
     percentileRank,
