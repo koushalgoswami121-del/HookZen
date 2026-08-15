@@ -705,14 +705,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4 font-medium text-slate-600">
-            <div className="flex items-center gap-1.5 transition-colors">
-              <span className="hidden sm:inline">Have any query?</span>
-              <a href="mailto:support@hookzen.me" className="flex items-center gap-1 text-amber-600 hover:text-amber-700 font-bold cursor-pointer">
-                <Mail className="h-3 w-3" />
-                <span>Mail us here</span>
-              </a>
-            </div>
-            <span>•</span>
+
             <button onClick={handleOpenBlog} className="hover:text-amber-800 transition-colors flex items-center gap-1 cursor-pointer">
               <BookOpen className="h-3 w-3 text-amber-600" />
               <span>Blog &amp; Guides</span>

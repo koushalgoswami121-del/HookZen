@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Zap, TrendingUp, BarChart3, Target, Eye, ShieldCheck, Play, ArrowUpRight } from 'lucide-react';
+import { Flame, Zap, TrendingUp, BarChart3, Target, Eye, ShieldCheck, Play, ArrowUpRight, HelpCircle, ChevronDown, User, Mail } from 'lucide-react';
 
 export const ViralGrowthSection: React.FC = () => {
   return (
@@ -123,6 +123,117 @@ export const ViralGrowthSection: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* FAQ & About Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-20 pt-16 border-t border-slate-200/80">
+
+        {/* FAQ */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100/80 border border-slate-200 text-slate-700 shadow-sm">
+              <HelpCircle className="h-5 w-5" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h3>
+          </div>
+
+          <div className="space-y-4">
+            <details className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm open:bg-slate-50 transition-all cursor-pointer">
+              <summary className="text-sm sm:text-base font-bold text-slate-800 list-none flex items-center justify-between outline-none">
+                1. Can HookZen help me make better-performing videos?
+                <ChevronDown className="h-4 w-4 text-slate-400 group-open:rotate-180 transition-transform shrink-0 ml-2" />
+              </summary>
+              <p className="mt-4 text-sm text-slate-600 leading-relaxed font-medium">
+                Absolutely. HookZen analyzes your short-form content and identifies the elements that can influence performance, including your hook, retention potential, script structure, topic relevance, SEO, and engagement. You'll get a Viral Potential Score plus specific recommendations to strengthen your video before you post it. HookZen provides an AI-powered estimate based on your content actual performance can vary depending on factors such as audience, trends, timing, and distribution.
+              </p>
+            </details>
+
+            <details className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm open:bg-slate-50 transition-all cursor-pointer">
+              <summary className="text-sm sm:text-base font-bold text-slate-800 list-none flex items-center justify-between outline-none">
+                2. How is HookZen different from ChatGPT or Gemini?
+                <ChevronDown className="h-4 w-4 text-slate-400 group-open:rotate-180 transition-transform shrink-0 ml-2" />
+              </summary>
+              <p className="mt-4 text-sm text-slate-600 leading-relaxed font-medium">
+                HookZen is built specifically for short-form content performance analysis. Instead of starting with a blank chat, HookZen evaluates your content across multiple performance factors and gives you a structured score, retention estimate, weaknesses, strengths, and specific recommendations in one report, saving you time.
+              </p>
+            </details>
+
+            <details className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm open:bg-slate-50 transition-all cursor-pointer">
+              <summary className="text-sm sm:text-base font-bold text-slate-800 list-none flex items-center justify-between outline-none">
+                3. What does the Viral Potential Score actually mean?
+                <ChevronDown className="h-4 w-4 text-slate-400 group-open:rotate-180 transition-transform shrink-0 ml-2" />
+              </summary>
+              <p className="mt-4 text-sm text-slate-600 leading-relaxed font-medium">
+                The 0–100 score is an estimate of how strongly your content matches characteristics commonly associated with strong short-form performance. It is not a percentage chance of going viral. Actual results can also depend on your audience, account history, platform, trends, timing, distribution, and viewer behavior.
+              </p>
+            </details>
+
+            <details className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm open:bg-slate-50 transition-all cursor-pointer">
+              <summary className="text-sm sm:text-base font-bold text-slate-800 list-none flex items-center justify-between outline-none">
+                4. Do I need to upload my actual video?
+                <ChevronDown className="h-4 w-4 text-slate-400 group-open:rotate-180 transition-transform shrink-0 ml-2" />
+              </summary>
+              <p className="mt-4 text-sm text-slate-600 leading-relaxed font-medium">
+                Not always. You can analyze your script, title, and other content details. However, visual analysis is only performed when visual content is actually provided. HookZen will never pretend it analyzed visuals that it couldn't see.
+              </p>
+            </details>
+
+            <details className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm open:bg-slate-50 transition-all cursor-pointer">
+              <summary className="text-sm sm:text-base font-bold text-slate-800 list-none flex items-center justify-between outline-none">
+                5. Why should I pay for HookZen when I can use free AI tools?
+                <ChevronDown className="h-4 w-4 text-slate-400 group-open:rotate-180 transition-transform shrink-0 ml-2" />
+              </summary>
+              <p className="mt-4 text-sm text-slate-600 leading-relaxed font-medium">
+                You can use general-purpose AI tools, but you'll spend more time explaining what you want and interpreting the results. HookZen is designed to give creators a ready-to-use performance report with scoring, retention analysis, SEO insights, strengths, weaknesses, and optimization recommendations in one workflow.
+              </p>
+            </details>
+          </div>
+        </div>
+
+        {/* About Me */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 border border-amber-200 text-amber-800 shadow-sm">
+              <User className="h-5 w-5" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Built by a Creator</h3>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 p-6 sm:p-8 shadow-sm">
+            <h4 className="text-lg font-extrabold text-slate-800 mb-4">
+              Built by a creator who wanted a better way to improve content.
+            </h4>
+            <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
+              <p>
+                I built HookZen because I noticed how much time creators can spend wondering whether a script is actually strong enough to publish.
+              </p>
+              <p>
+                You can ask a general AI tool for feedback, but getting a detailed, structured analysis often means writing long prompts, asking follow-up questions, and piecing everything together yourself.
+              </p>
+              <p>
+                HookZen was created to make that process simple.
+              </p>
+              <p>
+                It brings the important parts of short-form content analysis into one place — from hooks and retention to structure, SEO, engagement, and actionable improvements.
+              </p>
+              <p>
+                I'm still building and improving HookZen every day, and I'm committed to making it genuinely useful for creators rather than making empty promises about going viral.
+              </p>
+              <p className="font-bold text-slate-800 pt-1">
+                Your content deserves more than a guess. HookZen helps you understand what you can improve before you hit publish.
+              </p>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-slate-200/80">
+              <h5 className="text-sm font-bold text-slate-800 mb-2">Have a question or feedback?</h5>
+              <a href="mailto:support@hookzen.me" className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 border border-amber-200/80 hover:bg-amber-100 transition-colors">
+                <Mail className="h-4 w-4" />
+                <span>Mail us here</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   );
