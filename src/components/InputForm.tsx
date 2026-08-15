@@ -174,7 +174,7 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   if (isAnalyzing) {
     return (
-      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-gradient-to-br from-orange-50/30 to-amber-100/20 p-10 shadow-2xl backdrop-blur-md min-h-[500px] flex flex-col items-center justify-center">
+      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-gradient-to-br from-orange-50/30 to-amber-100/20 p-6 sm:p-10 shadow-2xl backdrop-blur-md min-h-[400px] sm:min-h-[500px] flex flex-col items-center justify-center">
         {/* Glow Effects */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-300/10 blur-[80px] rounded-full pointer-events-none" />
 
@@ -217,11 +217,11 @@ export const InputForm: React.FC<InputFormProps> = ({
         </div>
 
         {/* Steps */}
-        <div className="flex items-center gap-2 text-xs font-bold transition-all duration-500">
+        <div className="flex flex-wrap justify-center items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold transition-all duration-500 max-w-[280px] sm:max-w-none text-center">
           <span className={loadingStep === 0 ? "text-amber-600" : "text-slate-400"}>Extracting insights</span>
-          <span className="text-amber-400 text-[10px]">●</span>
+          <span className="text-amber-400 text-[10px] hidden sm:inline-block">●</span>
           <span className={loadingStep === 1 ? "text-amber-600" : "text-slate-400"}>Checking patterns</span>
-          <span className="text-amber-400 text-[10px]">●</span>
+          <span className="text-amber-400 text-[10px] hidden sm:inline-block">●</span>
           <span className={loadingStep === 2 ? "text-amber-600" : "text-slate-400"}>Calculating score</span>
         </div>
       </div>
@@ -229,7 +229,7 @@ export const InputForm: React.FC<InputFormProps> = ({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-7 sm:p-10 shadow-2xl backdrop-blur-md">
+    <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-5 sm:p-7 md:p-10 shadow-2xl backdrop-blur-md">
       {/* Form Header */}
       <div className="mb-6 border-b border-slate-200/70 pb-5">
         <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
