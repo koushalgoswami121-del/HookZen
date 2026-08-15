@@ -202,7 +202,8 @@ export interface AnalysisInput {
   imageMetrics?: ImageAnalysisMetrics | null;
   transcript: string;
   industry: IndustryType;
-  lengthSeconds: number;
+  followerCount: number;
+  highestViews: number;
   targetPlatform: PlatformType;
   language?: LanguageType;
 }

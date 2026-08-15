@@ -385,8 +385,8 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
 
   const potentialInfo = getPotentialLabel(overallScore);
 
-  // Video Duration in Seconds (Default ~30s if not set)
-  const videoDurationSec = input.lengthSeconds || Math.max(15, Math.min(120, Math.round((pacingAnalysis.wordCount || 10) / 2.6) + 10));
+  // Video Duration in Seconds (Inferred from word count)
+  const videoDurationSec = Math.max(15, Math.min(120, Math.round((pacingAnalysis.wordCount || 10) / 2.6) + 10));
 
   // Audience Retention Curve Data Points
   const hookScore = Math.round(Number(categoryScores.hookScore) || 50);

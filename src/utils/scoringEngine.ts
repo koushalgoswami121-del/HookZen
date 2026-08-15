@@ -111,7 +111,10 @@ export function isMeaninglessText(title: string, transcript: string): boolean {
 export async function calculateViralScore(
   input: AnalysisInput
 ): Promise<ViralScoreResult> {
-  const { title, image, imageDataUrl, transcript, industry, lengthSeconds, targetPlatform } = input;
+  const { title, image, imageDataUrl, transcript, industry, followerCount, highestViews, targetPlatform } = input;
+
+  const wordCount = transcript.trim() ? transcript.trim().split(/\s+/).length : 0;
+  const estimatedLengthSeconds = Math.max(10, Math.round(wordCount / (160 / 60)));
 
   // 1. Run sub-analyzers
   const imageMetrics = await analyzeImageCanvas(image || imageDataUrl);
@@ -144,7 +147,7 @@ export async function calculateViralScore(
       pacingAnalysis: {
         wpm: 0,
         wordCount: transcript.trim() ? transcript.trim().split(/\s+/).length : 0,
-        durationSeconds: input.lengthSeconds || 30,
+        durationSeconds: estimatedLengthSeconds,
         pacingScore: 0,
         idealWpmRange: [160, 190],
         sentenceVariance: 0,
@@ -202,7 +205,7 @@ export async function calculateViralScore(
   const hookAnalysis = analyzeHook(title, transcript, industry);
   const { pacingResult, scriptHeatmap, retentionCurve } = analyzePacing(
     transcript,
-    lengthSeconds,
+    estimatedLengthSeconds,
     industry
   );
   const keywordAnalysis = analyzeKeywords(title, transcript, industry);
@@ -235,6 +238,28 @@ export async function calculateViralScore(
     tier = 'Moderate Reach';
     percentileRank = 50 + Math.round((overallScore - 55) * 1.4);
   }
+
+  // 4b. Viral Resemblance Score Calculation
+  // Uses Follower Count and Highest Views as a multiplier for Viral resemblance
+  const contentQualityScore = overallScore;
+  let viralPotentialBase = contentQualityScore;
+
+  // A channel with massive history implies higher base virality capability
+  if (highestViews > 500000) {
+    viralPotentialBase += 15;
+  } else if (highestViews > 50000) {
+    viralPotentialBase += 8;
+  }
+
+  // Follower leverage
+  if (followerCount > 100000) {
+    viralPotentialBase += 10;
+  } else if (followerCount < 1000) {
+    // Harder to go viral from scratch with poor content, but great content can still pop
+    if (contentQualityScore < 70) viralPotentialBase -= 10;
+  }
+
+  const finalViralPotential = Math.min(100, Math.max(0, Math.round(viralPotentialBase)));
 
   // 4. Generate Priority Actionable Tips with Plain English explanations
   const actionableTips: OptimizationTip[] = [];
@@ -375,8 +400,8 @@ export async function calculateViralScore(
     timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
     input,
     overallScore,
-    contentScore: Math.min(100, Math.round(overallScore * 1.05)), // Higher raw quality estimate
-    viralPotential: overallScore, // Base projection
+    contentScore: contentQualityScore,
+    viralPotential: finalViralPotential,
     confidence: 'Medium',
     modelVersion: 'v1.4',
     letterGrade,

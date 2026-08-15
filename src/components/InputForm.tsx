@@ -21,6 +21,8 @@ import {
   ChevronDown,
   Crown,
   Globe,
+  Users,
+  Eye,
 } from 'lucide-react';
 import { AnalysisInput, IndustryType, LanguageType, PlatformType } from '../types';
 import { FreemiumState } from '../utils/freemiumManager';
@@ -88,9 +90,10 @@ export const InputForm: React.FC<InputFormProps> = ({
   const [title, setTitle] = useState('');
   const [transcript, setTranscript] = useState('');
   const [industry, setIndustry] = useState<IndustryType>('tech');
-  const [lengthSeconds, setLengthSeconds] = useState<number>(30);
+  const [followerCount, setFollowerCount] = useState<number>(0);
+  const [highestViews, setHighestViews] = useState<number>(0);
   const [targetPlatform, setTargetPlatform] = useState<PlatformType>('all');
-  const [language, setLanguage] = useState<LanguageType>('all');
+  const [language, setLanguage] = useState<LanguageType>('en');
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
@@ -129,7 +132,8 @@ export const InputForm: React.FC<InputFormProps> = ({
       imageDataUrl: imagePreviewUrl,
       transcript,
       industry,
-      lengthSeconds: Math.max(5, lengthSeconds),
+      followerCount: Math.max(0, followerCount),
+      highestViews: Math.max(0, highestViews),
       targetPlatform,
       language,
     });
@@ -137,7 +141,6 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   // Real-time metrics
   const wordCount = transcript.trim() ? transcript.trim().split(/\s+/).length : 0;
-  const estimatedWpm = lengthSeconds > 0 ? Math.round((wordCount / lengthSeconds) * 60) : 0;
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-7 sm:p-10 shadow-2xl backdrop-blur-md">
@@ -254,10 +257,10 @@ export const InputForm: React.FC<InputFormProps> = ({
           </div>
         </div>
 
-        {/* Fields 4, 5 & 6: Bottom Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+        {/* Fields 4, 5, 6 & 7: Bottom Grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-6">
           {/* Field 4: Niche / Industry */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-3">
             {(() => {
               const currentIndConfig = INDUSTRIES.find((ind) => ind.id === industry) || INDUSTRIES[0];
               const IconComp = currentIndConfig.icon;
@@ -272,7 +275,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                     <select
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value as IndustryType)}
-                      className={`w-full appearance-none rounded-xl border ${currentIndConfig.borderColor} ${currentIndConfig.bgColor} ${currentIndConfig.textColor} px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 ${currentIndConfig.ringColor} shadow-2xs transition-all cursor-pointer`}
+                      className={`w-full appearance-none rounded-xl border ${currentIndConfig.borderColor} ${currentIndConfig.bgColor} ${currentIndConfig.textColor} px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 ${currentIndConfig.ringColor} shadow-2xs transition-all cursor-pointer`}
                     >
                       {INDUSTRIES.map((ind) => (
                         <option key={ind.id} value={ind.id} className="text-slate-900 bg-white font-medium py-1">
@@ -280,7 +283,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                         </option>
                       ))}
                     </select>
-                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-slate-600">
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-slate-600">
                       <ChevronDown className="h-4 w-4" />
                     </div>
                   </div>
@@ -290,16 +293,16 @@ export const InputForm: React.FC<InputFormProps> = ({
           </div>
 
           {/* Field 5: Video Language */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-3">
             <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
               <Globe className="h-4 w-4 text-amber-600" />
-              5. Video Language
+              5. Language
             </label>
             <div className="relative">
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as LanguageType)}
-                className="w-full appearance-none rounded-xl border border-amber-300/80 bg-amber-50/40 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-200/60 shadow-2xs transition-all cursor-pointer"
+                className="w-full appearance-none rounded-xl border border-amber-300/80 bg-amber-50/40 px-3 py-3 text-sm font-semibold text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-200/60 shadow-2xs transition-all cursor-pointer"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.id} value={lang.id} className="text-slate-900 font-medium py-1">
@@ -307,51 +310,45 @@ export const InputForm: React.FC<InputFormProps> = ({
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-slate-500">
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-slate-500">
                 <ChevronDown className="h-4 w-4" />
               </div>
             </div>
           </div>
 
-          {/* Field 6: Video Length (Seconds) */}
-          <div className="md:col-span-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
-                <Clock className="h-4 w-4 text-slate-500" />
-                6. Video Length
-              </label>
-              <span className="text-xs font-bold text-slate-900 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
-                {lengthSeconds}s
-              </span>
-            </div>
-
-            <div className="space-y-3 pt-0.5">
+          {/* Field 6: Follower Count */}
+          <div className="md:col-span-3">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+              <Users className="h-4 w-4 text-blue-600" />
+              6. Followers
+            </label>
+            <div className="relative">
               <input
-                type="range"
-                min={5}
-                max={180}
-                step={1}
-                value={lengthSeconds}
-                onChange={(e) => setLengthSeconds(Number(e.target.value))}
-                className="custom-slider"
+                type="number"
+                min="0"
+                value={followerCount || ''}
+                onChange={(e) => setFollowerCount(parseInt(e.target.value) || 0)}
+                placeholder="e.g. 10000"
+                className="w-full rounded-xl border border-blue-200 bg-blue-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-blue-300 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/60 shadow-2xs transition-all"
               />
+            </div>
+          </div>
 
-              {/* Quick Preset Pills */}
-              <div className="flex items-center justify-between gap-1">
-                {[15, 30, 45, 60, 90].map((secs) => (
-                  <button
-                    key={secs}
-                    type="button"
-                    onClick={() => setLengthSeconds(secs)}
-                    className={`rounded-lg px-2 py-1 text-xs font-bold border transition-all cursor-pointer ${lengthSeconds === secs
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                      : 'bg-white/90 text-slate-700 border-slate-200 hover:bg-white hover:border-slate-300'
-                      }`}
-                  >
-                    {secs}s
-                  </button>
-                ))}
-              </div>
+          {/* Field 7: Highest Views */}
+          <div className="md:col-span-3">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+              <Eye className="h-4 w-4 text-rose-600" />
+              7. Highest Views
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                value={highestViews || ''}
+                onChange={(e) => setHighestViews(parseInt(e.target.value) || 0)}
+                placeholder="e.g. 500000"
+                className="w-full rounded-xl border border-rose-200 bg-rose-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-rose-300 focus:border-rose-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200/60 shadow-2xs transition-all"
+              />
             </div>
           </div>
         </div>
