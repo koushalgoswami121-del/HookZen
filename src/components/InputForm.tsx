@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import {
   Upload,
   Image as ImageIcon,
@@ -23,6 +23,8 @@ import {
   Globe,
   Users,
   Eye,
+  Search,
+  FileAxis3D,
 } from 'lucide-react';
 import { AnalysisInput, IndustryType, LanguageType, PlatformType } from '../types';
 import { FreemiumState } from '../utils/freemiumManager';
@@ -90,8 +92,8 @@ export const InputForm: React.FC<InputFormProps> = ({
   const [title, setTitle] = useState('');
   const [transcript, setTranscript] = useState('');
   const [industry, setIndustry] = useState<IndustryType>('tech');
-  const [followerCount, setFollowerCount] = useState<number>(0);
-  const [highestViews, setHighestViews] = useState<number>(0);
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
+  const [highestViews, setHighestViews] = useState<number | null>(null);
   const [targetPlatform, setTargetPlatform] = useState<PlatformType>('all');
   const [language, setLanguage] = useState<LanguageType>('en');
 
@@ -132,8 +134,8 @@ export const InputForm: React.FC<InputFormProps> = ({
       imageDataUrl: imagePreviewUrl,
       transcript,
       industry,
-      followerCount: Math.max(0, followerCount),
-      highestViews: Math.max(0, highestViews),
+      followerCount: Math.max(0, followerCount || 0),
+      highestViews: Math.max(0, highestViews || 0),
       targetPlatform,
       language,
     });
@@ -141,6 +143,90 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   // Real-time metrics
   const wordCount = transcript.trim() ? transcript.trim().split(/\s+/).length : 0;
+
+  // Artificial Loader Progress State
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  useEffect(() => {
+    if (isAnalyzing) {
+      setLoadingProgress(0);
+      setLoadingStep(0);
+
+      const interval = setInterval(() => {
+        setLoadingProgress((prev) => {
+          const next = prev + (Math.random() * 5 + 2);
+          if (next >= 100) clearInterval(interval);
+          return Math.min(next, 95); // hold at 95% until real API resolves
+        });
+      }, 100);
+
+      const stepInterval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % 3);
+      }, 1300);
+
+      return () => {
+        clearInterval(interval);
+        clearInterval(stepInterval);
+      };
+    }
+  }, [isAnalyzing]);
+
+  if (isAnalyzing) {
+    return (
+      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-gradient-to-br from-orange-50/30 to-amber-100/20 p-10 shadow-2xl backdrop-blur-md min-h-[500px] flex flex-col items-center justify-center">
+        {/* Glow Effects */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-300/10 blur-[80px] rounded-full pointer-events-none" />
+
+        {/* Floating Particles */}
+        <div className="absolute top-1/3 left-1/4 w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" />
+        <div className="absolute top-1/4 right-1/3 w-2 h-2 bg-amber-300 rounded-full animate-pulse" />
+        <div className="absolute bottom-1/3 right-1/4 w-1 h-1 bg-amber-500 rounded-full animate-ping" />
+
+        {/* Center Icon Composition */}
+        <div className="relative mb-10 w-32 h-32 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white shadow-xl rounded-2xl rotate-3 border border-slate-100 flex items-start justify-center pt-5">
+            <div className="space-y-2 w-full px-5">
+              <div className="h-2 w-3/4 bg-slate-200 rounded-full" />
+              <div className="h-2 w-full bg-slate-100 rounded-full" />
+              <div className="h-2 w-5/6 bg-slate-100 rounded-full" />
+              <div className="h-2 w-3/4 bg-slate-100 rounded-full pt-4" />
+            </div>
+          </div>
+
+          <div className="absolute -bottom-4 -right-4 bg-slate-900 rounded-full p-2.5 shadow-2xl z-10 flex items-center justify-center transform hover:scale-105 transition-transform duration-700 animate-pulse">
+            <div className="relative flex items-center justify-center w-12 h-12 bg-white rounded-full border-4 border-slate-900 shadow-inner">
+              <Zap className="h-6 w-6 text-amber-500 fill-amber-500" />
+            </div>
+            {/* Magnifying Handle */}
+            <div className="absolute -bottom-3 -right-3 w-6 h-6 border-4 border-slate-900 bg-slate-800 rotate-45 rounded-sm" />
+          </div>
+        </div>
+
+        {/* Text */}
+        <h2 className="text-2xl font-black tracking-tight text-slate-800 mb-6">
+          Analyzing your script...
+        </h2>
+
+        {/* Capsule Progress Bar */}
+        <div className="w-full max-w-sm h-3 relative bg-slate-100 rounded-full overflow-hidden mb-6 shadow-inner border border-slate-200/60">
+          <div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-300 ease-out rounded-full"
+            style={{ width: `${loadingProgress}%` }}
+          />
+        </div>
+
+        {/* Steps */}
+        <div className="flex items-center gap-2 text-xs font-bold transition-all duration-500">
+          <span className={loadingStep === 0 ? "text-amber-600" : "text-slate-400"}>Extracting insights</span>
+          <span className="text-amber-400 text-[10px]">●</span>
+          <span className={loadingStep === 1 ? "text-amber-600" : "text-slate-400"}>Checking patterns</span>
+          <span className="text-amber-400 text-[10px]">●</span>
+          <span className={loadingStep === 2 ? "text-amber-600" : "text-slate-400"}>Calculating score</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-7 sm:p-10 shadow-2xl backdrop-blur-md">
@@ -321,15 +407,17 @@ export const InputForm: React.FC<InputFormProps> = ({
             <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
               <Users className="h-4 w-4 text-blue-600" />
               6. Followers
+              <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <input
                 type="number"
                 min="0"
-                value={followerCount || ''}
-                onChange={(e) => setFollowerCount(parseInt(e.target.value) || 0)}
+                value={followerCount === null ? '' : followerCount}
+                onChange={(e) => setFollowerCount(parseInt(e.target.value))}
                 placeholder="e.g. 10000"
                 className="w-full rounded-xl border border-blue-200 bg-blue-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-blue-300 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/60 shadow-2xs transition-all"
+                required
               />
             </div>
           </div>
@@ -339,15 +427,17 @@ export const InputForm: React.FC<InputFormProps> = ({
             <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
               <Eye className="h-4 w-4 text-rose-600" />
               7. Highest Views
+              <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <input
                 type="number"
                 min="0"
-                value={highestViews || ''}
-                onChange={(e) => setHighestViews(parseInt(e.target.value) || 0)}
+                value={highestViews === null ? '' : highestViews}
+                onChange={(e) => setHighestViews(parseInt(e.target.value))}
                 placeholder="e.g. 500000"
                 className="w-full rounded-xl border border-rose-200 bg-rose-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-rose-300 focus:border-rose-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200/60 shadow-2xs transition-all"
+                required
               />
             </div>
           </div>
