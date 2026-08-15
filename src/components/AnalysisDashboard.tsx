@@ -476,12 +476,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
               A data-informed estimate of short-form performance potential based on content signals.
             </p>
-            <div className="mt-3 bg-amber-50 rounded-lg p-2.5 border border-amber-200 flex items-start gap-2 shadow-sm">
-              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-amber-900 leading-tight font-medium">
-                <strong>Important:</strong> This score is an AI estimate based on content characteristics. It is not a guarantee of views or virality. Actual performance can vary significantly based on audience, distribution, and timing.
-              </p>
-            </div>
+
           </div>
 
           {/* Center Column: Semi-Circular Arc Gauge */}
@@ -1167,7 +1162,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         )}
       </div>
 
-      {/* 6. OPTIMIZED SCRIPT & PLAN MODAL */}
+      {/* 6.5. FAINT AI DISCLAIMER */}
+      <div className="text-center w-full no-print pt-2 pb-6">
+        <span className="text-[10px] text-slate-300 font-medium select-none">AI can make mistakes</span>
+      </div>
+
+      {/* 7. OPTIMIZED SCRIPT & PLAN MODAL */}
       {
         showOptimizedModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
