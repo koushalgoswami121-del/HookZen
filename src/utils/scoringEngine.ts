@@ -220,46 +220,70 @@ export async function calculateViralScore(
     curiosityScore: detailedAnalysis.curiosity.score,
   };
 
-  // 3. Overall Score & Letter Grade from deterministic engine
-  const overallScore = detailedAnalysis.overallScore;
-  const letterGrade = detailedAnalysis.letterGrade;
+  // 3. Score generation logic
+  const contentQualityScore = detailedAnalysis.overallScore;
+  let letterGrade = detailedAnalysis.letterGrade;
 
-  // Tier classification
+  // 4b. Advanced Follower & Views Heuristic Adjustments
+  let scoreAdjust = 0;
+
+  // Follower leverage tiers
+  if (followerCount < 1000) {
+    scoreAdjust -= 25; // Keep scores significantly lower if <1k
+  } else if (followerCount < 5000) {
+    scoreAdjust -= 15;
+  } else if (followerCount < 25000) {
+    scoreAdjust -= 5;
+  } else if (followerCount < 50000) {
+    scoreAdjust += 5;
+  } else if (followerCount < 100000) {
+    scoreAdjust += 12;
+  } else {
+    // 100k+ followers
+    scoreAdjust += 20;
+  }
+
+  // Highest views impact (Algorithmic history)
+  if (highestViews > 500000) {
+    scoreAdjust += 15;
+  } else if (highestViews > 100000) {
+    scoreAdjust += 10;
+  } else if (highestViews > 25000) {
+    scoreAdjust += 5;
+  } else if (highestViews < 1000) {
+    scoreAdjust -= 10;
+  }
+
+  // "if the script is bad [but] followers are good give a little bit number to it"
+  // If content is poor (< 50) but they are massive, raise the floor safely.
+  if (contentQualityScore < 50 && (followerCount > 25000 || highestViews > 100000)) {
+    scoreAdjust += 15; // Soft safety net
+  }
+
+  // Calculate final absolute scores
+  const finalScoreRaw = contentQualityScore + scoreAdjust;
+  let overallScore = Math.min(100, Math.max(10, Math.round(finalScoreRaw))); // 10 is the absolute floor
+  const finalViralPotential = overallScore;
+
+  // Re-evaluate Tier classification based on new scaled score
   let tier: ViralScoreResult['tier'] = 'Needs Optimization';
   let percentileRank = Math.min(99, Math.max(5, Math.round(overallScore * 0.95)));
 
   if (overallScore >= 85) {
     tier = 'Viral Potential';
+    letterGrade = 'A';
     percentileRank = Math.min(99, 90 + Math.round((overallScore - 85) * 0.6));
   } else if (overallScore >= 72) {
     tier = 'Strong Contender';
+    letterGrade = 'B';
     percentileRank = 75 + Math.round((overallScore - 72) * 1.1);
   } else if (overallScore >= 55) {
     tier = 'Moderate Reach';
+    letterGrade = 'C';
     percentileRank = 50 + Math.round((overallScore - 55) * 1.4);
+  } else {
+    letterGrade = overallScore >= 40 ? 'D' : 'F';
   }
-
-  // 4b. Viral Resemblance Score Calculation
-  // Uses Follower Count and Highest Views as a multiplier for Viral resemblance
-  const contentQualityScore = overallScore;
-  let viralPotentialBase = contentQualityScore;
-
-  // A channel with massive history implies higher base virality capability
-  if (highestViews > 500000) {
-    viralPotentialBase += 15;
-  } else if (highestViews > 50000) {
-    viralPotentialBase += 8;
-  }
-
-  // Follower leverage
-  if (followerCount > 100000) {
-    viralPotentialBase += 10;
-  } else if (followerCount < 1000) {
-    // Harder to go viral from scratch with poor content, but great content can still pop
-    if (contentQualityScore < 70) viralPotentialBase -= 10;
-  }
-
-  const finalViralPotential = Math.min(100, Math.max(0, Math.round(viralPotentialBase)));
 
   // 4. Generate Priority Actionable Tips with Plain English explanations
   const actionableTips: OptimizationTip[] = [];
