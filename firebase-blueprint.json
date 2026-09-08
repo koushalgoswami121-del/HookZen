@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "User profile, email, and metadata",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "history": {
+      "title": "Viral Score History Item",
+      "description": "Saved video script audit history per user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "overallScore": { "type": "number" },
+        "tier": { "type": "string" },
+        "input": { "type": "object" }
+      },
+      "required": ["id", "userId", "timestamp", "overallScore"]
+    }
+  }
+}
