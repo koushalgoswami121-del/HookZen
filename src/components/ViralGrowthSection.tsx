@@ -7,7 +7,7 @@ export const ViralGrowthSection: React.FC = () => {
       {/* Header Divider */}
       <div className="flex items-center gap-4 text-center">
         <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-200 to-slate-200" />
-        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 border border-amber-200/80 text-amber-900 text-xs font-extrabold uppercase tracking-wider shadow-2xs">
+        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 border border-amber-200/80 text-amber-900 text-xs font-extrabold shadow-2xs">
           <Flame className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
           <span>The Short-Form Viral Growth Engine</span>
         </div>

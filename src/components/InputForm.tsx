@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Upload,
   Image as ImageIcon,
@@ -263,7 +263,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         {/* Field 1: Title */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <Type className="h-4 w-4 text-slate-500" />
               1. Reel / Short / TikTok Title
               <span className="text-rose-500">*</span>
@@ -286,7 +286,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Field 2: Thumbnail / First Frame Upload */}
           <div className="lg:col-span-5">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
               <ImageIcon className="h-4 w-4 text-slate-500" />
               2. Thumbnail / First Frame Image
             </label>
@@ -337,7 +337,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           {/* Field 3: Transcript / Script */}
           <div className="lg:col-span-7">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
                 <FileText className="h-4 w-4 text-slate-500" />
                 3. Transcript / Script
                 <span className="text-rose-500">*</span>
@@ -372,7 +372,7 @@ export const InputForm: React.FC<InputFormProps> = ({
 
               return (
                 <>
-                  <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+                  <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
                     <IconComp className={`h-4 w-4 ${currentIndConfig.textColor}`} />
                     4. Niche / Industry
                   </label>
@@ -399,7 +399,7 @@ export const InputForm: React.FC<InputFormProps> = ({
 
           {/* Field 5: Video Language */}
           <div className="md:col-span-3">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
               <Globe className="h-4 w-4 text-amber-600" />
               5. Language
             </label>
@@ -423,7 +423,7 @@ export const InputForm: React.FC<InputFormProps> = ({
 
           {/* Field 6: Follower Count */}
           <div className="md:col-span-3">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
               <Users className="h-4 w-4 text-blue-600" />
               6. Followers
               <span className="text-rose-500">*</span>
@@ -442,7 +442,7 @@ export const InputForm: React.FC<InputFormProps> = ({
 
           {/* Field 7: Highest Views */}
           <div className="md:col-span-3">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
               <Eye className="h-4 w-4 text-rose-600" />
               7. Highest Views
               <span className="text-rose-500">*</span>
