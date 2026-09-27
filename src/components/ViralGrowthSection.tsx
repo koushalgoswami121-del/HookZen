@@ -205,7 +205,7 @@ export const ViralGrowthSection: React.FC = () => {
             </h4>
             <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
               <p>
-                I built HookZen because I noticed how much time creators can spend wondering whether a script is actually strong enough to publish.
+                HookZen is built by creators, for creators, because we noticed how much time creators can spend wondering whether a script is actually strong enough to publish.
               </p>
               <p>
                 You can ask a general AI tool for feedback, but getting a detailed, structured analysis often means writing long prompts, asking follow-up questions, and piecing everything together yourself.
@@ -217,7 +217,7 @@ export const ViralGrowthSection: React.FC = () => {
                 It brings the important parts of short-form content analysis into one place — from hooks and retention to structure, SEO, engagement, and actionable improvements.
               </p>
               <p>
-                I'm still building and improving HookZen every day, and I'm committed to making it genuinely useful for creators rather than making empty promises about going viral.
+                We're continuously building and improving HookZen, and we're committed to making it genuinely useful for creators rather than making empty promises about going viral.
               </p>
               <p className="font-bold text-slate-800 pt-1">
                 Your content deserves more than a guess. HookZen helps you understand what you can improve before you hit publish.
