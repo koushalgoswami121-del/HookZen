@@ -5,7 +5,7 @@ import { InputForm } from './components/InputForm';
 import { AnalysisDashboard } from './components/AnalysisDashboard';
 import { HistoryModal } from './components/HistoryModal';
 import { BlogView } from './components/BlogView';
-import { AdminBlogModal } from './components/AdminBlogModal';
+import { AdminSpaceView } from './components/AdminSpaceView';
 import { PaymentSuccessView } from './components/PaymentSuccessView';
 import { PaymentCancelView } from './components/PaymentCancelView';
 import { ViralGrowthSection } from './components/ViralGrowthSection';
@@ -46,16 +46,14 @@ import { Smartphone, ArrowLeft, BookOpen, TrendingUp, Zap, Flame, Target, Activi
 import { AnalyzingAnimation } from './components/AnalyzingAnimation';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'calculator' | 'blog' | 'payment_success' | 'payment_cancel'>('calculator');
+  const [currentView, setCurrentView] = useState<'calculator' | 'blog' | 'payment_success' | 'payment_cancel' | 'adminspace'>('calculator');
   const [blogSlug, setBlogSlug] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentResult, setCurrentResult] = useState<ViralScoreResult | null>(null);
   const [history, setHistory] = useState<ViralScoreResult[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
-  const [secretClickCount, setSecretClickCount] = useState(0);
   const [blogKey, setBlogKey] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -265,52 +263,15 @@ export default function App() {
     }
   };
 
-  // Stealth Trigger Listener (Keyboard: Ctrl+Shift+A / Cmd+Shift+A, or URL Hash #admin)
-  useEffect(() => {
-    const checkSecretTrigger = () => {
-      const hash = window.location.hash;
-      const search = window.location.search;
-      if (hash === '#admin' || search.includes('admin=true') || search.includes('secret=hookzen2026')) {
-        setIsAdminOpen(true);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+A or Cmd+Shift+A
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
-        e.preventDefault();
-        setIsAdminOpen((prev) => !prev);
-      }
-    };
-
-    checkSecretTrigger();
-    window.addEventListener('hashchange', checkSecretTrigger);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('hashchange', checkSecretTrigger);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  // Secret Triple Click on Footer Dot
-  const handleFooterSecretClick = () => {
-    setSecretClickCount((prev) => {
-      if (prev + 1 >= 3) {
-        setIsAdminOpen(true);
-        return 0;
-      }
-      return prev + 1;
-    });
-  };
-
-  // Path routing listener for /blog, /payment/success, /payment/cancel, and checkout returns
+  // Path routing listener for /adminspace, /blog, /payment/success, /payment/cancel, and checkout returns
   useEffect(() => {
     const handlePath = () => {
       const path = window.location.pathname.toLowerCase();
       const search = window.location.search.toLowerCase();
 
-      if (
+      if (path === '/adminspace' || path.startsWith('/adminspace')) {
+        setCurrentView('adminspace');
+      } else if (
         path.includes('/payment/success') ||
         path.includes('/success') ||
         search.includes('checkout_success') ||
@@ -456,10 +417,21 @@ export default function App() {
 
   const handleGoHome = () => {
     setCurrentView('calculator');
+    setBlogSlug(null);
     if (window.history.pushState) {
       window.history.pushState(null, '', '/');
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (currentView === 'adminspace') {
+    return (
+      <AdminSpaceView
+        onGoHome={handleGoHome}
+        onPostsUpdated={() => setBlogKey((prev) => prev + 1)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-watercolor text-slate-900 font-sans antialiased selection:bg-amber-200 flex flex-col justify-between">
@@ -680,28 +652,14 @@ export default function App() {
         onDeleteAccount={handleDeleteAccount}
       />
 
-      {/* Secret Admin Blog CMS Modal */}
-      <AdminBlogModal
-        isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
-        onPostsUpdated={() => setBlogKey((prev) => prev + 1)}
-      />
-
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-200/60 bg-white/40 py-6 text-xs text-slate-500 backdrop-blur-xs">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span
-              onClick={handleFooterSecretClick}
-              className="font-semibold text-slate-700 select-none cursor-pointer hover:text-slate-900 transition-colors"
-              title="HookZen"
-            >
+            <span className="font-semibold text-slate-700">
               HookZen
             </span>
-            <span
-              onClick={handleFooterSecretClick}
-              className="text-slate-300 select-none cursor-pointer"
-            >
+            <span className="text-slate-300">
               •
             </span>
             <span className="text-slate-500">AI Viral Score Calculator for Shorts, TikTok &amp; Reels</span>
