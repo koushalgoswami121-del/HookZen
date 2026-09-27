@@ -70,6 +70,11 @@ export interface HookAnalysisResult {
   | 'Pattern Interrupt'
   | 'Direct Calling'
   | 'Value Pitch'
+  | 'Direct Hook'
+  | 'Conversational Intro'
+  | 'Statistical Claim'
+  | 'Contrarian Take'
+  | 'Question Hook'
   | 'Weak / Descriptive';
   emotionalIntensity: number; // 0 - 100
   titleHookScore: number; // 0 - 100
@@ -150,6 +155,25 @@ export interface ImprovedHookItem {
   category: string;
 }
 
+export interface ViralHookItem {
+  id: string;
+  title: string;
+  explanation: string;
+  category: string;
+  score: number;
+  breakdown?: {
+    relevance: number;
+    curiosity: number;
+    clarity: number;
+    specificity: number;
+    credibility: number;
+    patternInterrupt: number;
+    emotionalPull: number;
+    audienceFit: number;
+  };
+  viralLogicVersion?: string;
+}
+
 export interface DetailedScriptAnalysis {
   overallScore: number;
   letterGrade: LetterGrade;
@@ -195,6 +219,62 @@ export interface DetailedScriptAnalysis {
   improvedCTAs: string[];
 }
 
+export type ScoringComponentKey =
+  | 'hook'
+  | 'retention'
+  | 'structure'
+  | 'visual'
+  | 'engagement'
+  | 'discoverability';
+
+export interface ComponentDiagnostic {
+  name: string;
+  key: ScoringComponentKey;
+  weight: number; // e.g. 0.30
+  score: number; // 0 - 100
+  weightedScore: number; // score * weight
+  confidence: 'high' | 'medium' | 'low';
+  evidence: string[];
+  strengths: string[];
+  weaknesses: string[];
+  reasoning: string;
+  recommendations: string[];
+}
+
+export interface CreatorContext {
+  followerCount: number;
+  highestViews?: number;
+  followerTier: string;
+  followerDescription: string;
+  viewBenchmark: string;
+  note: string;
+  socialHandle?: string;
+  socialPlatform?: 'instagram' | 'youtube' | 'tiktok';
+  postsCount?: number;
+}
+
+export interface FixThisFirstAction {
+  component: string;
+  bottleneckTitle: string;
+  impactPts: number;
+  problem: string;
+  whyItMatters: string;
+  concreteFix: string;
+  urgency: 'critical' | 'high' | 'medium';
+}
+
+export type ViralityTier =
+  | 'Exceptional Potential'
+  | 'Strong Potential'
+  | 'Good Potential'
+  | 'Needs Improvement'
+  | 'High Risk'
+  | 'Viral Breakout'
+  | 'Strong Contender'
+  | 'Moderate Reach'
+  | 'Needs Optimization'
+  | 'Viral Potential';
+
 export interface AnalysisInput {
   title: string;
   image?: File | null;
@@ -203,9 +283,12 @@ export interface AnalysisInput {
   transcript: string;
   industry: IndustryType;
   followerCount: number;
-  highestViews: number;
+  highestViews?: number;
   targetPlatform: PlatformType;
   language?: LanguageType;
+  lengthSeconds?: number;
+  socialHandle?: string;
+  socialPlatform?: 'instagram' | 'youtube' | 'tiktok';
 }
 
 export interface ViralScoreResult {
@@ -213,12 +296,16 @@ export interface ViralScoreResult {
   timestamp: string;
   input: AnalysisInput;
   overallScore: number; // 0 - 100
+  scoringVersion?: '2.0' | '1.0';
+  componentDiagnostics?: Record<ScoringComponentKey, ComponentDiagnostic>;
+  fixThisFirst?: FixThisFirstAction;
+  creatorContext?: CreatorContext;
   contentScore?: number; // 0 - 100 Content Quality Score
   viralPotential?: number; // 0 - 100 Viral resemblance Score
   confidence?: 'High' | 'Medium' | 'Low'; // Prediction confidence
   modelVersion?: string;
   letterGrade: LetterGrade;
-  tier: 'Viral Breakout' | 'Strong Contender' | 'Moderate Reach' | 'Needs Optimization' | 'Viral Potential';
+  tier: ViralityTier;
   percentileRank: number; // e.g. 96th percentile
   categoryScores: CategoryScores;
   hookAnalysis: HookAnalysisResult;
@@ -232,4 +319,10 @@ export interface ViralScoreResult {
   suggestedTitleAlternatives: string[];
   optimizedScript: string;
   detailedAnalysis: DetailedScriptAnalysis;
+  viralHooks?: ViralHookItem[];
+  viralityTier?: ViralityTier;
+  grade?: LetterGrade;
+  warnings?: string[];
+  cleanScript?: string;
 }
+

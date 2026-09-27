@@ -630,7 +630,7 @@ export const BLOG_POSTS: BlogPost[] = ${JSON.stringify(posts, null, 2)};`;
                               </div>
                             </div>
                             <div className="text-center pl-4 border-l border-slate-200">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Used This Month</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Used Today</p>
                               <p className="text-xs font-black text-slate-700">{u.dailyCreditsUsed || 0}</p>
                             </div>
 

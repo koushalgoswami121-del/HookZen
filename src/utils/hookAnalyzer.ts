@@ -25,7 +25,7 @@ export function analyzeHook(
   if (isMeaninglessText(cleanTitle, cleanScript)) {
     return {
       hookText: hookText || cleanTitle || 'No hook provided',
-      hookType: 'Weak / Descriptive',
+      hookType: 'Direct Hook',
       emotionalIntensity: 0,
       titleHookScore: 0,
       scriptHookScore: 0,
@@ -45,7 +45,7 @@ export function analyzeHook(
   }
 
   // 2. Classify Hook Strategy
-  let hookType: HookAnalysisResult['hookType'] = 'Weak / Descriptive';
+  let hookType: HookAnalysisResult['hookType'] = 'Direct Hook';
   if (/stop (doing|buying|using|making|saying)/i.test(titleLower) || /stop (doing|buying|using|making|saying)|lose|losing|ruin|ruining|mistake|kill/i.test(hookLower)) {
     hookType = 'Negative Framing';
   } else if (/\d+%\s*(of)?/i.test(titleLower) || /\d+%\s*(of)?/i.test(hookLower) || /\d+\s*(mistakes|hacks|reasons|steps|tools|ways|prompts|creators|videos)/i.test(titleLower) || /\d+\s*(mistakes|hacks|reasons|steps|creators|videos)/i.test(hookLower)) {
@@ -60,6 +60,8 @@ export function analyzeHook(
     hookType = 'Value Pitch';
   }
 
+  const isSpecializedHook = hookType !== 'Direct Hook';
+
   // 3. Score Title Hook (0 - 100)
   let titleHookScore = 40; // Base score for valid title
   if (cleanTitle.length >= 8 && cleanTitle.length <= 80) titleHookScore += 20; // Optimal title length
@@ -68,7 +70,7 @@ export function analyzeHook(
   if (/\d+/.test(cleanTitle) || /%/.test(cleanTitle)) titleHookScore += 20; // Numbers/percentages add high specificity
   if (/[!?¿¡]/.test(cleanTitle) || /[\u{1F300}-\u{1F9FF}]/u.test(cleanTitle)) titleHookScore += 10; // Punctuation & Emoji punch
   if (detectedPowerWords.length > 0) titleHookScore += Math.min(30, detectedPowerWords.length * 12);
-  if (hookType !== 'Weak / Descriptive') titleHookScore += 20;
+  if (isSpecializedHook) titleHookScore += 20;
 
   titleHookScore = Math.min(100, Math.max(20, Math.round(titleHookScore)));
 
@@ -78,7 +80,7 @@ export function analyzeHook(
   if (/\d+%|\b\d+\b/i.test(hookLower)) scriptHookScore += 20; // Specific statistics / numbers
   if (detectedPowerWords.length > 0) scriptHookScore += Math.min(25, detectedPowerWords.length * 10);
   if (/you|your|this|why|stop|never|lose|losing|before|creators|tú|tu|du|vous|aap|tum|kya|que|wie|como|как|あなた|你|너|انت/i.test(hookLower)) scriptHookScore += 15;
-  if (hookType !== 'Weak / Descriptive') scriptHookScore += 15;
+  if (isSpecializedHook) scriptHookScore += 15;
 
   scriptHookScore = Math.min(100, Math.max(20, Math.round(scriptHookScore)));
 
@@ -87,7 +89,7 @@ export function analyzeHook(
     100,
     Math.round(
       detectedPowerWords.length * 20 +
-      (hookType !== 'Weak / Descriptive' ? 30 : 10) +
+      (isSpecializedHook ? 30 : 10) +
       (titleHookScore * 0.3)
     )
   );

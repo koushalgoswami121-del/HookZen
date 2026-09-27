@@ -16,6 +16,7 @@ import { AccountSettingsModal } from './components/AccountSettingsModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import { AnalysisInput, ViralScoreResult } from './types';
 import { calculateViralScore } from './utils/scoringEngine';
+import { ensureV2Result } from './utils/v2Adapter';
 import { formatTo12HrTime } from './utils/formatTime';
 import {
   getFreemiumState,
@@ -24,8 +25,6 @@ import {
   useCredit,
   checkAndSyncIpCredits,
   toggleProStatus,
-  isSameMonth,
-  getCurrentMonthString,
   FreemiumState,
 } from './utils/freemiumManager';
 import {
@@ -120,16 +119,16 @@ export default function App() {
           // Preserve Pro status if either cloud profile OR local state has Pro activated
           const isPaid = Boolean(cloudProfile?.isPro) || localState.isPro;
 
-          const currentMonth = getCurrentMonthString();
-          const cloudUsed = (cloudProfile && isSameMonth(cloudProfile.lastResetDate, currentMonth)) ? Number(cloudProfile.dailyCreditsUsed || 0) : 0;
-          const ipUsed = (ipRecord && isSameMonth(ipRecord.lastResetDate, currentMonth)) ? Number(ipRecord.dailyCreditsUsed || 0) : 0;
+          const today = localState.lastResetDate;
+          const cloudUsed = (cloudProfile && cloudProfile.lastResetDate === today) ? Number(cloudProfile.dailyCreditsUsed || 0) : 0;
+          const ipUsed = (ipRecord && ipRecord.lastResetDate === today) ? Number(ipRecord.dailyCreditsUsed || 0) : 0;
           const localUsed = Number(localState.dailyCreditsUsed || 0);
 
           let maxCreditsUsed = 0;
           if (!isPaid) {
-            // For returning users with a verified cloud history this month, their cloud profile is the absolute source of truth.
+            // For returning users with a verified cloud history today, their cloud profile is the absolute source of truth.
             // This prevents IP usage from anonymous tabs from unfairly draining their logged-in account balance.
-            if (cloudProfile && isSameMonth(cloudProfile.lastResetDate, currentMonth) && cloudProfile.dailyCreditsUsed !== undefined) {
+            if (cloudProfile && cloudProfile.lastResetDate === today && cloudProfile.dailyCreditsUsed !== undefined) {
               maxCreditsUsed = cloudUsed;
             } else {
               // Brand new sign-ups are initialized with the anonymous IP/local usage to prevent endless trial abuse.
@@ -145,7 +144,7 @@ export default function App() {
               : 'free',
             dailyCreditsUsed: maxCreditsUsed,
             bonusCredits: cloudProfile?.bonusCredits || localState.bonusCredits || 0,
-            lastResetDate: currentMonth,
+            lastResetDate: today,
           };
 
           setFreemiumState(mergedState);
@@ -153,7 +152,7 @@ export default function App() {
 
           if (!isPaid) {
             // Ensure IP record in Firestore is also updated to reflect max credits used
-            await saveIpUsageToFirestore(ip, maxCreditsUsed, currentMonth);
+            await saveIpUsageToFirestore(ip, maxCreditsUsed, today);
           }
 
           await saveUserProfileToFirestore(currentUser.uid, {
@@ -167,15 +166,16 @@ export default function App() {
           // 2. Sync User History
           const cloudHistory = await fetchUserHistoryFromFirestore(currentUser.uid);
           if (cloudHistory && cloudHistory.length > 0) {
-            setHistory(cloudHistory);
+            setHistory(cloudHistory.map(ensureV2Result));
           } else {
             // Seed cloud history with local history if available
             const saved = localStorage.getItem('go_viral_history');
             if (saved) {
               const local: ViralScoreResult[] = JSON.parse(saved);
               if (local.length > 0) {
-                setHistory(local);
-                for (const item of local) {
+                const adapted = local.map(ensureV2Result);
+                setHistory(adapted);
+                for (const item of adapted) {
                   await saveUserHistoryItemToFirestore(currentUser.uid, item);
                 }
               }
@@ -189,7 +189,8 @@ export default function App() {
         try {
           const saved = localStorage.getItem('go_viral_history');
           if (saved) {
-            setHistory(JSON.parse(saved));
+            const local: ViralScoreResult[] = JSON.parse(saved);
+            setHistory(local.map(ensureV2Result));
           } else {
             setHistory([]);
           }
@@ -217,7 +218,7 @@ export default function App() {
           hasChanges = true;
         }
 
-        if (cloudProfile.dailyCreditsUsed !== undefined && prev.dailyCreditsUsed !== cloudProfile.dailyCreditsUsed && isSameMonth(cloudProfile.lastResetDate, prev.lastResetDate)) {
+        if (cloudProfile.dailyCreditsUsed !== undefined && prev.dailyCreditsUsed !== cloudProfile.dailyCreditsUsed && cloudProfile.lastResetDate === prev.lastResetDate) {
           newState.dailyCreditsUsed = cloudProfile.dailyCreditsUsed;
           hasChanges = true;
         }

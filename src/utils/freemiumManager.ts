@@ -8,61 +8,50 @@ import {
 export interface FreemiumState {
   isPro: boolean;
   planType?: 'free' | 'monthly' | 'annual' | 'lifetime';
-  dailyCreditsUsed: number; // Credits used in the current monthly cycle (retained for database compatibility)
-  maxFreeDailyCredits: number; // 50 credits refreshed monthly (retained for database compatibility)
+  dailyCreditsUsed: number;
+  maxFreeDailyCredits: number;
   bonusCredits?: number;
-  lastResetDate: string; // YYYY-MM
+  lastResetDate: string; // YYYY-MM-DD
 }
 
 const STORAGE_KEY = 'hookzen_freemium_state';
-export const MAX_FREE_MONTHLY_CREDITS = 50;
-const MAX_FREE_DAILY = MAX_FREE_MONTHLY_CREDITS;
+const MAX_FREE_DAILY = 50;
 export const CREDITS_PER_ANALYSIS = 10;
 
-export function getCurrentMonthString(): string {
+function getTodayDateString(): string {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-export function toMonthString(dateStr?: string): string {
-  if (!dateStr) return getCurrentMonthString();
-  return dateStr.slice(0, 7);
-}
-
-export function isSameMonth(date1?: string, date2?: string): boolean {
-  if (!date1 || !date2) return false;
-  return toMonthString(date1) === toMonthString(date2);
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 export function getFreemiumState(): FreemiumState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const currentMonth = getCurrentMonthString();
+    const today = getTodayDateString();
 
     if (!raw) {
       const initial: FreemiumState = {
         isPro: false,
         planType: 'free',
         dailyCreditsUsed: 0,
-        maxFreeDailyCredits: MAX_FREE_MONTHLY_CREDITS,
-        lastResetDate: currentMonth,
+        maxFreeDailyCredits: MAX_FREE_DAILY,
+        lastResetDate: today,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
       return initial;
     }
 
     const parsed: FreemiumState = JSON.parse(raw);
-    parsed.maxFreeDailyCredits = MAX_FREE_MONTHLY_CREDITS;
+    parsed.maxFreeDailyCredits = MAX_FREE_DAILY;
 
     // Default planType if missing
     if (!parsed.planType) {
       parsed.planType = parsed.isPro ? 'lifetime' : 'free';
     }
 
-    // Check if a new month has started
-    if (!isSameMonth(parsed.lastResetDate, currentMonth)) {
+    // Check if a new day has started
+    if (parsed.lastResetDate !== today) {
       parsed.dailyCreditsUsed = 0;
-      parsed.lastResetDate = currentMonth;
+      parsed.lastResetDate = today;
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
 
@@ -72,8 +61,8 @@ export function getFreemiumState(): FreemiumState {
       isPro: false,
       planType: 'free',
       dailyCreditsUsed: 0,
-      maxFreeDailyCredits: MAX_FREE_MONTHLY_CREDITS,
-      lastResetDate: getCurrentMonthString(),
+      maxFreeDailyCredits: MAX_FREE_DAILY,
+      lastResetDate: getTodayDateString(),
     };
   }
 }
@@ -98,7 +87,7 @@ export async function checkAndSyncIpCredits(isUserLoggedIn = false): Promise<Fre
   try {
     const ip = await getPublicIp();
     const fp = getDeviceFingerprint();
-    const currentMonth = getCurrentMonthString();
+    const today = getTodayDateString();
 
     // Check both vectors in parallel
     const [ipRecord, fpRecord] = await Promise.all([
@@ -107,10 +96,10 @@ export async function checkAndSyncIpCredits(isUserLoggedIn = false): Promise<Fre
     ]);
 
     let highestUsed = currentState.dailyCreditsUsed;
-    if (ipRecord && isSameMonth(ipRecord.lastResetDate, currentMonth)) {
+    if (ipRecord && ipRecord.lastResetDate === today) {
       highestUsed = Math.max(highestUsed, ipRecord.dailyCreditsUsed);
     }
-    if (fpRecord && isSameMonth(fpRecord.lastResetDate, currentMonth)) {
+    if (fpRecord && fpRecord.lastResetDate === today) {
       highestUsed = Math.max(highestUsed, fpRecord.dailyCreditsUsed);
     }
 
@@ -181,14 +170,11 @@ export function toggleProStatus(
   return state;
 }
 
-export function resetMonthlyCredits(): FreemiumState {
+export function resetDailyCredits(): FreemiumState {
   const state = getFreemiumState();
   state.dailyCreditsUsed = 0;
-  state.lastResetDate = getCurrentMonthString();
+  state.lastResetDate = getTodayDateString();
   saveFreemiumState(state);
   return state;
 }
-
-export const resetDailyCredits = resetMonthlyCredits;
-
 

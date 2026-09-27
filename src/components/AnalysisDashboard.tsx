@@ -44,15 +44,14 @@ import {
   HelpCircle,
   HeartHandshake,
   BookOpen,
-  Flame,
-  Activity,
   Video,
   AlertCircle,
 } from 'lucide-react';
-import { ViralScoreResult } from '../types';
+import { ScoringComponentKey, ViralScoreResult } from '../types';
 import { formatTo12HrTime } from '../utils/formatTime';
 import { FreemiumState } from '../utils/freemiumManager';
 import { analyzeScriptDeterministically } from '../utils/deterministicAnalyzer';
+import { ensureV2Result } from '../utils/v2Adapter';
 
 interface AnalysisDashboardProps {
   result: ViralScoreResult;
@@ -67,6 +66,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   freemiumState,
   onOpenPricing,
 }) => {
+  const v2 = ensureV2Result(result);
   const breakdownRef = React.useRef<HTMLDivElement>(null);
   const [showOptimizedModal, setShowOptimizedModal] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
@@ -77,6 +77,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   const [showDeeperAnalysis, setShowDeeperAnalysis] = useState(false);
 
   useEffect(() => {
+    setShowDeeperAnalysis(false);
     if (result.actionableTips && result.actionableTips.length > 0) {
       setExpandedTipId(result.actionableTips[0].id);
     }
@@ -136,51 +137,6 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   };
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<false | 'standard' | 'client_detail'>(false);
-
-  const formatHookTextForPdf = (hookText: string): string => {
-    if (!hookText) return '';
-    let formatted = hookText;
-
-    // 1. Strip off trailing repeated title or snippet after "until you watch this!"
-    formatted = formatted.replace(/(until you watch this!)\s+.*/i, '$1');
-    formatted = formatted.replace(/(until you watch this\!?)\s+.*/i, '$1');
-
-    // 2. If input.title is provided, replace occurrences of title or short title with [your topic]
-    if (input.title && input.title.trim().length > 0) {
-      const titleClean = input.title.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const titleRegex = new RegExp(`\\b${titleClean}\\b`, 'gi');
-      formatted = formatted.replace(titleRegex, '[your topic]');
-
-      // Replace short title (without leading My/The/A)
-      const shortTitle = input.title.replace(/^(my|the|a|an)\s+/gi, '').trim();
-      if (shortTitle.length > 3) {
-        const shortClean = shortTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const shortRegex = new RegExp(`\\b${shortClean}\\b`, 'gi');
-        formatted = formatted.replace(shortRegex, '[your topic]');
-      }
-    }
-
-    // 3. Replace explicit industry name if present in hook
-    if (input.industry && input.industry.trim().length > 0) {
-      const indRegex = new RegExp(`\\b${input.industry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-      formatted = formatted.replace(indRegex, '[your topic]');
-    }
-
-    // 4. Replace common industry terms
-    const commonTerms = ['Tech', 'Technology', 'Finance', 'Fitness', 'Business', 'Lifestyle', 'Education', 'Gaming', 'Beauty', 'Marketing', 'Crypto', 'E-commerce', 'Health', 'Software', 'Coding'];
-    for (const term of commonTerms) {
-      const reg = new RegExp(`\\b${term}\\b`, 'gi');
-      formatted = formatted.replace(reg, '[your topic]');
-    }
-
-    // 5. Replace generic topic/industry tags
-    formatted = formatted.replace(/\[(topic name|topic|niche|industry|category|your industry)\]/gi, '[your topic]');
-
-    // 6. Deduplicate repeated [your topic]
-    formatted = formatted.replace(/(\[your topic\]\s*)+/gi, '[your topic]');
-
-    return formatted.replace(/\s+/g, ' ').trim();
-  };
 
   const handleDownloadPdf = async (mode: 'standard' | 'client_detail' = 'standard') => {
     if (isGeneratingPdf) return;
@@ -320,38 +276,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         y += 22;
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`• First 3s Hook Power: ${categoryScores.hookScore}/100`, 50, y);
-        doc.text(`• Curiosity Gap Score: ${curiosityScore}/100`, 50, y + 18);
-        doc.text(`• Script Pacing Score: ${categoryScores.pacingScore}/100`, 50, y + 36);
-        doc.text(`• SEO Keyword Density: ${categoryScores.keywordScore}/100`, 50, y + 54);
-
-        // Recommended Hook Variations Section
-        y += 90;
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(15, 23, 42);
-        doc.text('Recommended High-Converting Viral Hook Variations:', 40, y);
-
-        y += 20;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(30, 41, 59);
-
-        const hookList = (result.suggestedTitleAlternatives && result.suggestedTitleAlternatives.length > 0)
-          ? result.suggestedTitleAlternatives.map(formatHookTextForPdf)
-          : [
-            "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
-            "3 Mistakes Everyone Makes in [your topic]",
-            "Why Nobody Is Talking About This [your topic] Hack",
-            "How to Get 10x Results in [your topic] Faster",
-            "Stop Doing [your topic] Right Now Until You Watch This"
-          ];
-
-        hookList.slice(0, 5).forEach((titleAlt, i) => {
-          const lines = doc.splitTextToSize(`${i + 1}. "${titleAlt}"`, 510);
-          doc.text(lines, 50, y);
-          y += (lines.length * 14) + 6;
-        });
+        doc.text(`• Hook Strength: ${v2.componentDiagnostics?.hook?.score ?? categoryScores.hookScore}/100`, 50, y);
+        doc.text(`• Visual First Frame: ${v2.componentDiagnostics?.visual?.score ?? categoryScores.visualScore}/100`, 50, y + 16);
+        doc.text(`• Engagement Potential: ${v2.componentDiagnostics?.engagement?.score ?? 60}/100`, 50, y + 32);
+        doc.text(`• Search & Discoverability: ${v2.componentDiagnostics?.discoverability?.score ?? categoryScores.keywordScore}/100`, 50, y + 48);
 
         doc.save(fileName);
       } catch (fallbackErr) {
@@ -375,12 +303,13 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
     }
   };
 
-  // Virality Potential text & color
+  // Virality Potential text & color (Authoritative V2 Mapping)
   const getPotentialLabel = (score: number) => {
-    if (score >= 85) return { label: 'VERY HIGH', badgeBg: 'bg-amber-100 text-amber-900 border-amber-300' };
-    if (score >= 70) return { label: 'HIGH', badgeBg: 'bg-amber-100 text-amber-900 border-amber-300' };
-    if (score >= 50) return { label: 'MODERATE', badgeBg: 'bg-blue-100 text-blue-900 border-blue-300' };
-    return { label: 'LOW', badgeBg: 'bg-slate-100 text-slate-800 border-slate-300' };
+    if (score >= 90) return { label: 'EXCEPTIONAL POTENTIAL', badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-300' };
+    if (score >= 75) return { label: 'STRONG POTENTIAL', badgeBg: 'bg-amber-100 text-amber-900 border-amber-300' };
+    if (score >= 60) return { label: 'GOOD POTENTIAL', badgeBg: 'bg-blue-100 text-blue-900 border-blue-300' };
+    if (score >= 40) return { label: 'NEEDS IMPROVEMENT', badgeBg: 'bg-amber-100 text-amber-900 border-amber-300' };
+    return { label: 'HIGH RISK', badgeBg: 'bg-rose-100 text-rose-900 border-rose-300' };
   };
 
   const potentialInfo = getPotentialLabel(overallScore);
@@ -418,6 +347,60 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
     { second: `${videoDurationSec}s`, secNum: videoDurationSec, retention: retentionEnd, stage: 'Video Completion' },
   ];
 
+  // Dynamic Content Diagnostics for Retention Stages (Grounded in analyzed script signals)
+  const cleanHookType = hookAnalysis.hookType && !['Weak / Descriptive', 'Direct Hook', 'Conversational Intro'].includes(hookAnalysis.hookType)
+    ? hookAnalysis.hookType
+    : (hookScore >= 75 ? 'Strong Opening' : hookScore >= 50 ? 'Direct Hook' : 'Opening Hook');
+  const hookStageTitle = `${cleanHookType} • ${hookScore >= 70 ? 'High Early Hold' : 'Needs More Tension'}`;
+
+  // Extract actual script text snippets for deeply personalized analysis
+  const rawOpeningText = (hookAnalysis.hookText || input.transcript || input.title || '').trim();
+  const openingWordsArray = rawOpeningText.split(/\s+/).slice(0, 9).join(' ');
+  const cleanOpeningSnippet = openingWordsArray ? `"${openingWordsArray}..."` : 'your opening hook';
+
+  const hookStageDesc = hookScore >= 75
+    ? `Opening with ${cleanOpeningSnippet} hooks attention and immediately establishes stakes, protecting your video from viewer drop-off in the first 3 seconds.`
+    : hookScore >= 50
+    ? `The opening line ${cleanOpeningSnippet} introduces the topic clearly, but adding an unanswered question or stronger contrast in the first sentence will boost 3-second hold above 80%.`
+    : `Opening with ${cleanOpeningSnippet} takes too long to deliver a compelling reason to stay. Replace introductory setup with an immediate bold claim, surprising number, or contrarian angle.`;
+
+  const midWordCount = pacingAnalysis.wordCount || 0;
+  const midWpm = pacingAnalysis.wpm || 160;
+
+  const midStageTitle = pacingScore >= 75
+    ? `Consistent Rhythm Through ~${t50}s`
+    : midWpm > 185
+    ? `Fast Speech Rate Near ~${t50}s`
+    : midWpm < 140 && midWpm > 0
+    ? `Pacing Slowdown Near ~${t50}s`
+    : pacingScore >= 50
+    ? `Steady Flow Through ~${t50}s`
+    : `Attention Slump Risk Near ~${t50}s`;
+
+  const midStageDesc = midWordCount <= 35
+    ? `At ${midWordCount} words (~${videoDurationSec}s total), your script is short and punchy. Viewers will easily sustain momentum through the ~${t50}s mark without losing focus.`
+    : pacingScore >= 75
+    ? `With ${midWordCount} words delivered at an active pace of ~${midWpm} WPM, sentence variety keeps viewer curiosity moving forward through second ~${t50}s without dragging.`
+    : pacingScore >= 50
+    ? `Script delivers ${midWordCount} words (~${midWpm} WPM). Pacing is steady, but trimming filler words around second ~${t50}s will prevent subtle attention drift.`
+    : `Pacing slows down leading up to second ~${t50}s. Break longer thoughts into quick, 1-line sentences to prevent viewers from losing interest mid-video.`;
+
+  const hasDetectedCta = Boolean(detailed?.cta?.hasCTA || detailed?.structure?.hasCta);
+  const endStageTitle = hasDetectedCta
+    ? (retentionEnd >= 45 ? 'Strong Completion • Explicit Call-To-Action' : 'Moderate Completion • CTA In Place')
+    : (retentionEnd >= 45 ? 'High Completion Potential • Missing Closing CTA' : 'Drop-Off Risk at Finish • Lacks Action Prompt');
+
+  const transcriptSentences = (input.transcript || '').split(/[.\n?!]+/).map(s => s.trim()).filter(Boolean);
+  const closingSentenceSnippet = transcriptSentences.length > 0
+    ? `"${transcriptSentences[transcriptSentences.length - 1].slice(0, 50)}..."`
+    : 'your closing line';
+
+  const endStageDesc = hasDetectedCta
+    ? `Closing with ${closingSentenceSnippet} delivers a clear next action, effectively converting finishing viewers into algorithmic saves, shares, and comments.`
+    : retentionEnd >= 45
+    ? `Script concludes with ${closingSentenceSnippet} without giving an explicit instruction. Adding a direct prompt like "Save this for later" or asking a specific question will capitalize on your high completion rate.`
+    : `Viewers are dropping off before reaching the end (${closingSentenceSnippet}). Tighten explanations in the second half of the script so more viewers reach the final completion milestone.`;
+
   // Semi-circle Arc Gauge parameters
   const radius = 40;
   const arcLength = Math.PI * radius; // ~125.66
@@ -444,13 +427,19 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         </div>
       </div>
 
-      {/* 1. REPORT TITLE */}
-      <div className="text-center space-y-1.5 pt-2">
+      {/* 1. REPORT TITLE & V2 BADGE */}
+      <div className="text-center space-y-2 pt-2">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 text-white px-3.5 py-1 text-[11px] font-black uppercase tracking-wider shadow-xs">
+            <Sparkles className="h-3 w-3 text-amber-400" />
+            <span>Pre-Publish Content Coach • Engine v2.0</span>
+          </span>
+        </div>
         <h1 className="font-serif-display text-3xl font-black text-slate-900 sm:text-4xl md:text-5xl tracking-tight leading-tight">
-          Performance Analysis Report
+          Performance Coaching Report
         </h1>
         <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-xl mx-auto flex items-center justify-center gap-2 flex-wrap">
-          <span>AI-powered short-form performance analyzer and retention forecast.</span>
+          <span>Mathematically transparent pre-publish script analysis and retention diagnosis.</span>
           {result.timestamp && (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200/80">
               <Clock className="h-3 w-3 text-amber-600" />
@@ -460,23 +449,22 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         </p>
       </div>
 
-      {/* 2. TOP SCORE BANNER CARD */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 sm:p-8 shadow-xl backdrop-blur-md">
+      {/* 2. TOP SCORE BANNER CARD & MATHEMATICAL TRANSPARENCY */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          {/* Left Column: Go Viral Score Intro */}
-          <div className="md:col-span-4 space-y-2">
+          {/* Left Column: Pre-Publish Score Intro */}
+          <div className="md:col-span-4 space-y-2.5">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600 border border-amber-200">
                 <Zap className="h-4 w-4 fill-amber-500 text-amber-500" />
               </div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                Viral Potential Score
+                Content Quality Score
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-              A data-informed estimate of short-form performance potential based on content signals.
+              Deterministic 6-component content rating evaluated across hook, pacing, structure, visual, engagement, and discoverability.
             </p>
-
           </div>
 
           {/* Center Column: Semi-Circular Arc Gauge */}
@@ -520,58 +508,61 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             </div>
 
             {/* Bottom Virality Potential & Grade Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-              <div className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-wider ${potentialInfo.badgeBg} shadow-2xs`}>
-                POTENTIAL: {potentialInfo.label}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
+              <div className={`rounded-full border px-3 py-0.5 text-xs font-black uppercase tracking-wider ${potentialInfo.badgeBg} shadow-2xs`}>
+                {v2.tier || potentialInfo.label}
               </div>
-              <div className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs bg-slate-100 text-slate-700 border-slate-300`}>
-                CONFIDENCE: {result.confidence || 'MEDIUM'}
+              <div className="rounded-full border px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-2xs bg-slate-100 text-slate-700 border-slate-300">
+                CONFIDENCE: {v2.confidence || 'MEDIUM'}
               </div>
-              <div className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${detailed.letterGrade === 'A+'
+              <div className={`rounded-full border px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-2xs ${v2.letterGrade === 'A+'
                 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-400'
-                : detailed.letterGrade === 'A'
+                : v2.letterGrade === 'A'
                   ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                  : detailed.letterGrade === 'B'
+                  : v2.letterGrade === 'B'
                     ? 'bg-blue-100 text-blue-900 border-blue-300'
-                    : detailed.letterGrade === 'C'
+                    : v2.letterGrade === 'C'
                       ? 'bg-amber-100 text-amber-900 border-amber-300'
                       : 'bg-rose-100 text-rose-900 border-rose-300'
                 }`}>
-                GRADE: {detailed.letterGrade}
+                GRADE: {v2.letterGrade}
+              </div>
+              <div className="rounded-full border px-2 py-0.5 text-[11px] font-bold text-slate-600 bg-white border-slate-200">
+                Top {100 - (v2.percentileRank || 50)}% Benchmark
               </div>
             </div>
           </div>
 
-          {/* Right Column: Analyzed Title & Metadata Box */}
+          {/* Right Column: Analyzed Video Metadata Box */}
           <div className="md:col-span-4 space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
               <span className="text-slate-500">🔗</span>
-              <span>Analyzed Video</span>
+              <span>Content Metadata</span>
             </div>
             <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-2xs space-y-2">
-              <p className="text-xs font-bold text-slate-800 leading-snug line-clamp-3">
+              <p className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">
                 <span className="text-slate-500 font-medium">Title: </span>
                 {input.title || 'Untitled Video'}
               </p>
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-100/90 px-2 py-0.5 text-[11px] font-bold text-amber-900 border border-amber-200 shadow-2xs">
-                  <span>🌐</span>
-                  <span>
-                    {!input.language || input.language === 'all'
-                      ? 'All Languages Supported'
-                      : input.language.toUpperCase()}
-                  </span>
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                <span className="inline-flex items-center gap-1 rounded-md bg-amber-100/90 px-2 py-0.5 font-bold text-amber-900 border border-amber-200 shadow-2xs">
+                  <span className="capitalize">{input.industry}</span>
                 </span>
-                {input.industry && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700 border border-slate-200">
-                    <span className="capitalize">{input.industry}</span>
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-700 border border-slate-200 capitalize">
+                  Target: {input.targetPlatform || 'All Platforms'}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-700 border border-slate-200">
+                  {pacingAnalysis.wordCount} words (~{videoDurationSec}s)
+                </span>
               </div>
             </div>
           </div>
         </div>
+
       </div>
+
+
+
 
       {/* 3. PREDICTED AUDIENCE RETENTION GRAPH */}
       <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
@@ -585,14 +576,14 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
               </h3>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
-              This is a model estimate based on your script/video characteristics, not observed audience data.
+              This is a model estimate based on your script and content structure, not observed audience data.
             </p>
           </div>
 
           {/* Legend */}
           <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
             <div className="h-2.5 w-6 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600" />
-            <span>Viewer Stay %</span>
+            <span>Predicted Retention %</span>
           </div>
         </div>
 
@@ -624,10 +615,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 fontWeight={600}
                 tickFormatter={(val) => `${val}%`}
                 axisLine={false}
-                label={{ value: 'Audience Retention (%)', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 12, fontWeight: 700 }}
+                label={{ value: 'Predicted Viewer Retention (%)', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 12, fontWeight: 700 }}
               />
               <Tooltip
-                formatter={(val: any) => [`${val}% Viewers Retained`, 'Retention Rate']}
+                formatter={(val: any) => [`${val}%`, 'Predicted Retention %']}
                 labelFormatter={(label, items) => {
                   const stage = items && items[0] ? items[0].payload.stage : '';
                   return `Timestamp: ${label} (${stage})`;
@@ -650,84 +641,83 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           </ResponsiveContainer>
         </div>
 
-        {/* Retention Stage Diagnostics */}
+        {/* Retention Stage Diagnostics (Grounded in analyzed script signals) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-200/60">
-          {/* Stage 1: Hook Drop (0s - 3s) */}
+          {/* Stage 1: Predicted 3-Second Retention */}
           <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 space-y-1.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                Hook Phase (0s - 3s)
+              <span className="text-xs font-semibold text-slate-500">
+                Predicted 3-Second Retention
               </span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${retention3s >= 75 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                 }`}>
-                {retention3s}% Retained
+                {retention3s}%
               </span>
             </div>
-            <h4 className="text-sm font-bold text-slate-900">
-              {retention3s >= 75 ? 'Strong Early Retention' : 'Early Viewer Scroll-Away'}
+            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+              {hookStageTitle}
             </h4>
             <p className="text-xs text-slate-600 leading-relaxed font-normal">
-              {retention3s >= 75
-                ? 'Your opening hook captures attention quickly. Most viewers stay past 3s.'
-                : 'Over 30%+ of viewers scroll away in first 3 seconds. Strengthen your opening curiosity line or visual pattern interrupt.'}
+              {hookStageDesc}
             </p>
           </div>
 
           {/* Stage 2: Mid-Video Retention */}
           <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 space-y-1.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                Mid-Video ({t50}s)
+              <span className="text-xs font-semibold text-slate-500">
+                Mid-Video Retention
               </span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${retentionMid >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
                 }`}>
-                {retentionMid}% Retained
+                Predicted: {retentionMid}%
               </span>
             </div>
-            <h4 className="text-sm font-bold text-slate-900">
-              {retentionMid >= 50 ? 'Steady Engagement Flow' : 'Midway Attention Drop'}
+            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+              {midStageTitle}
             </h4>
             <p className="text-xs text-slate-600 leading-relaxed font-normal">
-              {retentionMid >= 50
-                ? 'Pacing maintains solid attention through the middle of the script.'
-                : 'Script pacing slows down around midway. Trim filler words or add visual transitions to maintain momentum.'}
+              {midStageDesc}
             </p>
           </div>
 
           {/* Stage 3: Completion Rate */}
           <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 space-y-1.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                Completion Rate ({videoDurationSec}s)
+              <span className="text-xs font-semibold text-slate-500">
+                Completion Rate
               </span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${retentionEnd >= 35 ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
                 }`}>
-                {retentionEnd}% Finish
+                Predicted: {retentionEnd}%
               </span>
             </div>
-            <h4 className="text-sm font-bold text-slate-900">
-              {retentionEnd >= 35 ? 'High Algorithm Push' : 'Low Full Watch-Through'}
+            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+              {endStageTitle}
             </h4>
             <p className="text-xs text-slate-600 leading-relaxed font-normal">
-              {retentionEnd >= 35
-                ? 'High completion rate tells short-form algorithms to push your video to broader FYP feeds.'
-                : 'Fewer viewers reach the end. End with a crisp call-to-action or looping sentence.'}
+              {endStageDesc}
             </p>
           </div>
         </div>
 
-        {/* Action Button Below Graph: Analyse Deeper & Tips to Improve */}
+        {/* Action Button Below Graph: Toggle Analyse Deeper & Tips / Hide Analysis & Tips */}
         <div className="flex items-center justify-center pt-3 border-t border-slate-200/60 no-print">
           <button
             onClick={handleToggleDeeperAnalysis}
             className="flex items-center gap-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-6 py-3 text-xs sm:text-sm font-extrabold text-white shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-[0.98]"
           >
-            <Sparkles className="h-4 w-4 text-amber-400" />
-            <span>{showDeeperAnalysis ? 'Hide Analysis & Tips' : 'Analyse Deeper & Tips to Improve'}</span>
             {showDeeperAnalysis ? (
-              <ChevronUp className="h-4 w-4 text-amber-400 ml-1" />
+              <>
+                <ChevronUp className="h-4 w-4 text-amber-400" />
+                <span>Hide Analysis & Tips</span>
+              </>
             ) : (
-              <ArrowDown className="h-4 w-4 text-amber-400 animate-bounce ml-1" />
+              <>
+                <Sparkles className="h-4 w-4 text-amber-400" />
+                <span>Analyse Deeper & Tips to Improve</span>
+                <ArrowDown className="h-4 w-4 text-amber-400 animate-bounce ml-1" />
+              </>
             )}
           </button>
         </div>
@@ -744,85 +734,104 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-amber-600" />
                     <h3 className="text-lg font-bold text-slate-900">
-                      Analysis Breakdown
+                      Component Diagnostics
                     </h3>
                   </div>
-                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/80">
-                    Key Metrics
+                  <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+                    Content Diagnostics
                   </span>
                 </div>
 
                 <div className="space-y-3.5">
-                  {/* Card 1: Opening Hook */}
-                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-amber-300 transition-all">
+                  {/* Vector 1: Hook Strength */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-amber-300 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500 shrink-0" />
-                        <span className="text-sm font-bold text-slate-900">First 3s Hook</span>
+                        <span className="text-sm font-bold text-slate-900">Hook Strength</span>
                       </div>
-                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.hookScore >= 75
+                      <div className="flex items-center gap-1.5">
+                        <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${(v2.componentDiagnostics?.hook?.score ?? categoryScores.hookScore) >= 75
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                          {v2.componentDiagnostics?.hook?.score ?? categoryScores.hookScore}/100
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {hookAnalysis.hookType && !['Direct Hook', 'Weak / Descriptive', 'Conversational Intro'].includes(hookAnalysis.hookType) && (
+                        <strong className="text-slate-900">{hookAnalysis.hookType}: </strong>
+                      )}
+                      {(v2.componentDiagnostics?.hook?.reasoning || ((v2.componentDiagnostics?.hook?.score ?? categoryScores.hookScore) >= 65
+                        ? 'Captures curiosity early to prevent viewer scroll-away.'
+                        : 'Low early urgency. Try opening with a bold statement or direct question.')).replace(/Weak\s*\/\s*Descriptive:?\s*/gi, '')}
+                    </p>
+                  </div>
+
+                  {/* Vector 2: Visual First Frame */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-cyan-300 transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-cyan-600 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">Visual First Frame</span>
+                      </div>
+                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${(v2.componentDiagnostics?.visual?.score ?? categoryScores.visualScore) >= 70
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : (v2.componentDiagnostics?.visual?.score ?? categoryScores.visualScore) > 0
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
-                        {categoryScores.hookScore}/100
+                        {v2.componentDiagnostics?.visual?.score ?? categoryScores.visualScore}/100
                       </span>
                     </div>
 
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      <strong className="text-slate-900">{hookAnalysis.hookType}: </strong>
-                      {categoryScores.hookScore >= 65
-                        ? 'Captures curiosity early to prevent viewer scroll-away.'
-                        : 'Low early urgency. Try opening with a bold statement or direct question.'}
+                      {imageMetrics.hasImage ? (
+                        imageMetrics.isNineToSixteen
+                          ? 'Full-screen 9:16 vertical ratio maximizes smartphone feeds.'
+                          : 'Horizontal frame causes black bars. Vertical 9:16 yields higher viewer hold.'
+                      ) : (
+                        'No cover image was provided, so HookZen could not evaluate the visual first frame.'
+                      )}
                     </p>
                   </div>
 
-                  {/* Card 2: Script Structure */}
-                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-indigo-300 transition-all">
+                  {/* Vector 5: Engagement Potential */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-emerald-300 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-indigo-500 shrink-0" />
-                        <span className="text-sm font-bold text-slate-900">Script Structure</span>
+                        <HeartHandshake className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">Engagement Potential</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.pacingScore >= 75
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                          }`}>
-                          {categoryScores.pacingScore}/100
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                      {categoryScores.pacingScore >= 75
-                        ? `Good sentence rhythm and structural balance across your transcript.`
-                        : categoryScores.pacingScore >= 45
-                          ? `Script pacing is medium; sentence structure needs improvement for better viewer retention.`
-                          : `Script structure looks unorganized with poor pacing and weak sentence rhythm.`}
-                    </p>
-
-                    {pacingAnalysis.structuralBeats.fluffWordCount > 0 && (
-                      <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500 font-medium">
-                        <span className="font-bold text-slate-700">Filler Words:</span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-mono">
-                          {keywordAnalysis.fluffWords.slice(0, 3).join(', ')} ({pacingAnalysis.structuralBeats.fluffWordCount})
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card 3: Niche & SEO Alignment + Pro FYP Keyword Density Matrix */}
-                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-purple-300 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-purple-500 shrink-0" />
-                        <span className="text-sm font-bold text-slate-900">SEO & FYP Algorithm</span>
-                      </div>
-                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.keywordScore >= 70
+                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${(v2.componentDiagnostics?.engagement?.score ?? 50) >= 70
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>
-                        {categoryScores.keywordScore}/100
+                        {v2.componentDiagnostics?.engagement?.score ?? 50}/100
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {detailed.cta?.hasCTA
+                        ? 'Clear closing Call to Action detected, boosting save and comment rates.'
+                        : 'No direct closing CTA detected. Add a clear save or comment trigger.'}
+                    </p>
+                  </div>
+
+                  {/* Vector 6: Search & Discoverability */}
+                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2.5 hover:border-blue-300 transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-blue-500 shrink-0" />
+                        <span className="text-sm font-bold text-slate-900">Search & Discoverability</span>
+                      </div>
+                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${(v2.componentDiagnostics?.discoverability?.score ?? categoryScores.keywordScore) >= 70
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                        {v2.componentDiagnostics?.discoverability?.score ?? categoryScores.keywordScore}/100
                       </span>
                     </div>
 
@@ -830,7 +839,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                       {keywordAnalysis.detectedIndustryKeywords.length > 0 ? (
                         <span>Detected high-intent topic keywords for search indexing.</span>
                       ) : (
-                        <span>Add explicit niche topic words in title/script so algorithms push to the right FYP.</span>
+                        <span>Add explicit niche topic words in title/script to help route content to relevant topic feeds.</span>
                       )}
                     </p>
 
@@ -851,7 +860,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                           <div className="bg-white/90 p-2 rounded-lg border border-purple-100">
                             <span className="text-slate-500 font-semibold block text-[10px]">TikTok FYP Index</span>
                             <strong className="text-purple-900 font-bold">
-                              {categoryScores.keywordScore >= 70 ? 'High Discoverability' : 'Moderate Indexing'}
+                              {(v2.componentDiagnostics?.discoverability?.score ?? categoryScores.keywordScore) >= 70 ? 'High Discoverability' : 'Moderate Indexing'}
                             </strong>
                           </div>
                           <div className="bg-white/90 p-2 rounded-lg border border-purple-100">
@@ -884,32 +893,6 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                         </p>
                       </div>
                     )}
-                  </div>
-
-                  {/* Card 4: Thumbnail & Visual Format */}
-                  <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-2 hover:border-cyan-300 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4 text-cyan-600 shrink-0" />
-                        <span className="text-sm font-bold text-slate-900">Visual Format</span>
-                      </div>
-                      <span className={`rounded-lg px-2 py-0.5 text-xs font-bold ${categoryScores.visualScore >= 70
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-slate-100 text-slate-700 border border-slate-200'
-                        }`}>
-                        {categoryScores.visualScore}/100
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      {imageMetrics.hasImage ? (
-                        imageMetrics.isNineToSixteen
-                          ? 'Full-screen 9:16 vertical ratio maximizes smartphone feeds.'
-                          : 'Horizontal frame causes black bars. Vertical 9:16 yields 35%+ more clicks.'
-                      ) : (
-                        'Upload a 9:16 vertical cover image with bold text overlay for higher feed CTR.'
-                      )}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -1102,6 +1085,17 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
               </div>
             </div>
 
+            {/* Bottom Hide Analysis Button */}
+            <div className="flex items-center justify-center pt-2 pb-2 no-print">
+              <button
+                onClick={handleToggleDeeperAnalysis}
+                className="flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+              >
+                <ChevronUp className="h-4 w-4 text-amber-400" />
+                <span>Hide Analysis & Tips</span>
+              </button>
+            </div>
+
           </>
         )
       }
@@ -1122,7 +1116,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 <p className="text-xs text-amber-100 font-medium max-w-xl">
                   {freemiumState?.isPro
                     ? 'Perform unlimited analyses, generate custom high-retention hooks, and enjoy a 100% ad-free experience.'
-                    : 'Get unlimited video checks, AI hook auto-rewrites, and a 100% ad-free experience for $9.99/mo.'}
+                    : 'Get unlimited daily checks, AI hook auto-rewrites, and a 100% ad-free experience for $9.99/mo.'}
                 </p>
               </div>
 
@@ -1201,7 +1195,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 {/* High-Converting Title Options */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                       <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                       High-Converting Title Ideas
                     </h4>
@@ -1234,7 +1228,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 {/* Optimized Script Rewrite */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                       <FileText className="h-3.5 w-3.5 text-slate-600" />
                       Fluff-Free Script Rewrite
                     </h4>
@@ -1257,7 +1251,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 {/* Platform Publishing Checklist */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                       <Layers className="h-3.5 w-3.5 text-slate-600" />
                       Platform Publishing Checklist
                     </h4>
@@ -1520,7 +1514,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                   🔍
                 </div>
                 <span className="text-[11px] font-bold text-slate-600 block leading-tight">
-                  SEO Keyword Density
+                  Search & Discoverability
                 </span>
               </div>
               <div>
@@ -1533,45 +1527,6 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* RECOMMENDED HIGH-CONVERTING VIRAL HOOK VARIATIONS */}
-        <div className="px-7 py-4 bg-[#F8FAFC]">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center text-amber-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-base font-black text-slate-900 tracking-tight">
-              Recommended High-Converting Viral Hook Variations
-            </h3>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm divide-y divide-slate-100 overflow-hidden">
-            {(result.suggestedTitleAlternatives && result.suggestedTitleAlternatives.length > 0
-              ? result.suggestedTitleAlternatives.map(formatHookTextForPdf)
-              : [
-                "Stop doing [your topic] until you watch this!",
-                "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
-                "The 1-minute [your topic] trick that 95% of creators have no idea exists!",
-                "How to get 10x results in [your topic] without wasting hours...",
-                "If you are struggling with [your topic], save this video right now!"
-              ]
-            ).slice(0, 5).map((hookText, idx) => (
-              <div key={idx} className="p-3.5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </span>
-                  <p className="text-xs font-bold text-slate-800 leading-snug">
-                    "{hookText}"
-                  </p>
-                </div>
-                <span className="text-amber-500 text-xs shrink-0">✦</span>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -1806,7 +1761,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                   🔍
                 </div>
                 <span className="text-[11px] font-bold text-slate-600 block leading-tight">
-                  SEO Keyword Density
+                  Search & Discoverability
                 </span>
               </div>
               <div>
@@ -1819,45 +1774,6 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* RECOMMENDED HIGH-CONVERTING VIRAL HOOK VARIATIONS */}
-        <div className="px-7 py-4 bg-[#F8FAFC]">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center text-amber-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-base font-black text-slate-900 tracking-tight">
-              Recommended High-Converting Viral Hook Variations
-            </h3>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm divide-y divide-slate-100 overflow-hidden">
-            {(result.suggestedTitleAlternatives && result.suggestedTitleAlternatives.length > 0
-              ? result.suggestedTitleAlternatives.map(formatHookTextForPdf)
-              : [
-                "Stop doing [your topic] until you watch this!",
-                "Everyone is doing [your topic] completely wrong. Here is what actually works instead...",
-                "The 1-minute [your topic] trick that 95% of creators have no idea exists!",
-                "How to get 10x results in [your topic] without wasting hours...",
-                "If you are struggling with [your topic], save this video right now!"
-              ]
-            ).slice(0, 5).map((hookText, idx) => (
-              <div key={idx} className="p-3.5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </span>
-                  <p className="text-xs font-bold text-slate-800 leading-snug">
-                    "{hookText}"
-                  </p>
-                </div>
-                <span className="text-amber-500 text-xs shrink-0">✦</span>
-              </div>
-            ))}
           </div>
         </div>
 

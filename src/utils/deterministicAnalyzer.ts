@@ -300,7 +300,7 @@ export function analyzeScriptDeterministically(
   hookScore = Math.min(98, Math.max(10, hookScore));
   const isGoodHook = hookScore >= 70;
 
-  let hookType = 'Weak / Descriptive';
+  let hookType = isGoodHook ? 'Direct Hook' : 'Conversational Intro';
   if (STATISTIC_PATTERNS.some((p) => p.test(lowerOpening))) hookType = 'Statistical Claim';
   else if (CONTRARIAN_PATTERNS.some((p) => p.test(lowerOpening))) hookType = 'Contrarian Take';
   else if (/\?/i.test(lowerOpening)) hookType = 'Question Hook';
@@ -466,7 +466,7 @@ export function analyzeScriptDeterministically(
     ? `Clear Call To Action (CTA) detected at the end of the script, boosting engagement and saves.`
     : `No closing CTA found ("Follow", "Save", "Comment", "Try this"). Viewers need a direct instruction before scrolling.`;
 
-  const ctaHowToImprove = `End your script with a high-value action instruction like: "Save this video for your next edit!" or "Comment 'HOOK' for the full guide."`;
+  const ctaHowToImprove = `End your script with a high-value Call to Action (CTA) instruction like: "Save this video for your next edit!" or "Comment 'HOOK' for the full guide."`;
 
   // ==========================================
   // 7. SEO ANALYSIS (5%)
@@ -544,10 +544,10 @@ export function analyzeScriptDeterministically(
   // 10. HOOK GENERATOR (5 Templates)
   // ==========================================
   const isGenericTopic = !cleanTitle || cleanTitle.trim().length < 3 || ['tech', 'fitness', 'finance', 'real estate', 'gaming', 'fashion', 'e-commerce', 'general'].includes(cleanTitle.toLowerCase().trim());
-  const topicKeyword = !isGenericTopic ? cleanTitle.trim() : '[your topic]';
-  const cleanSnippet = (sentences[0] || cleanTitle || 'viral content')
+  const cleanSnippet = (sentences[0] || cleanTitle || 'this topic')
     .replace(/^(hey guys|welcome back|in this video|today|so basically|what's up|hello)/gi, '')
     .trim();
+  const topicKeyword = !isGenericTopic ? cleanTitle.trim() : (cleanSnippet || 'this topic');
 
   const shortSnippet = cleanSnippet.length > 40 ? `${cleanSnippet.slice(0, 38)}...` : cleanSnippet;
 

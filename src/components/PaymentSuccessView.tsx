@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { CheckCircle2, Sparkles, Crown, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { FreemiumState, saveFreemiumState, getFreemiumState, getCurrentMonthString } from '../utils/freemiumManager';
+import { FreemiumState, saveFreemiumState, getFreemiumState } from '../utils/freemiumManager';
 import { fetchUserProfileFromFirestore, saveUserProfileToFirestore } from '../lib/firebase';
 
 interface PaymentSuccessViewProps {
@@ -52,7 +52,7 @@ export const PaymentSuccessView: React.FC<PaymentSuccessViewProps> = ({
           isPro: true,
           planType: plan,
           dailyCreditsUsed: 0,
-          lastResetDate: getCurrentMonthString(),
+          lastResetDate: new Date().toISOString().split('T')[0],
         };
 
         saveFreemiumState(updatedState);

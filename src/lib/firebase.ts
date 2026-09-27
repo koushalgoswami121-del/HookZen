@@ -210,9 +210,7 @@ export const saveIpUsageToFirestore = async (
     let finalCreditsUsed = creditsUsed;
     if (snap.exists()) {
       const data = snap.data();
-      const existingDate = String(data.lastResetDate || '');
-      // Check if existing record is within the same monthly reset cycle
-      if (existingDate.slice(0, 7) === lastResetDate.slice(0, 7)) {
+      if (data.lastResetDate === lastResetDate) {
         finalCreditsUsed = Math.max(Number(data.dailyCreditsUsed || 0), creditsUsed);
       }
     }
@@ -328,6 +326,46 @@ export const fetchFeedbacksFromFirestore = async (): Promise<FeedbackRecord[]> =
     return snapshot.docs.map(doc => doc.data() as FeedbackRecord);
   } catch (err) {
     console.warn('Failed to fetch feedbacks:', err);
+    return [];
+  }
+};
+
+export interface HookFeedbackRecord {
+  id?: string;
+  hookId: string;
+  hookText: string;
+  category: string;
+  score: number;
+  platform: string;
+  industry: string;
+  viralLogicVersion: string;
+  feedback: 'positive' | 'negative';
+  timestamp: string;
+  userId?: string;
+}
+
+export const saveHookFeedbackToFirestore = async (record: HookFeedbackRecord): Promise<boolean> => {
+  try {
+    const hookFeedbackRef = doc(collection(db, 'hook_feedbacks'));
+    await setDoc(hookFeedbackRef, {
+      ...record,
+      id: hookFeedbackRef.id,
+      timestamp: record.timestamp || new Date().toISOString(),
+    });
+    return true;
+  } catch (err) {
+    console.warn('Failed to save hook feedback:', err);
+    return false;
+  }
+};
+
+export const fetchHookFeedbacksFromFirestore = async (): Promise<HookFeedbackRecord[]> => {
+  try {
+    const q = query(collection(db, 'hook_feedbacks'), orderBy('timestamp', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as HookFeedbackRecord);
+  } catch (err) {
+    console.warn('Failed to fetch hook feedbacks:', err);
     return [];
   }
 };

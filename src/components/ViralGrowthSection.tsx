@@ -7,7 +7,7 @@ export const ViralGrowthSection: React.FC = () => {
       {/* Header Divider */}
       <div className="flex items-center gap-4 text-center">
         <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-200 to-slate-200" />
-        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 border border-amber-200/80 text-amber-900 text-xs font-extrabold shadow-2xs">
+        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 border border-amber-200/80 text-amber-900 text-xs font-semibold shadow-2xs">
           <Flame className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
           <span>The Short-Form Viral Growth Engine</span>
         </div>
@@ -22,7 +22,7 @@ export const ViralGrowthSection: React.FC = () => {
             <Zap className="h-5 w-5 fill-amber-500 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900">3s Hook Retention</h3>
+            <h3 className="text-sm font-bold text-slate-900">3s Hook Retention</h3>
             <p className="mt-1 text-xs text-slate-500 leading-relaxed">
               Detects pattern interrupts, curiosity gaps, and scroll-stopping triggers in the opening 3 seconds.
             </p>
@@ -38,7 +38,7 @@ export const ViralGrowthSection: React.FC = () => {
             <TrendingUp className="h-5 w-5 text-sky-600" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900">Script Flow & Structure</h3>
+            <h3 className="text-sm font-bold text-slate-900">Script Flow & Structure</h3>
             <p className="mt-1 text-xs text-slate-500 leading-relaxed">
               Evaluates sentence cadence, eliminates filler words, and ensures crisp structural rhythm.
             </p>
@@ -54,7 +54,7 @@ export const ViralGrowthSection: React.FC = () => {
             <Target className="h-5 w-5 text-indigo-600" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900">FYP Algorithmic SEO</h3>
+            <h3 className="text-sm font-bold text-slate-900">FYP Algorithmic SEO</h3>
             <p className="mt-1 text-xs text-slate-500 leading-relaxed">
               Evaluates title and transcript keyword density for TikTok Search, YouTube Shorts, and Reels feeds.
             </p>
@@ -70,7 +70,7 @@ export const ViralGrowthSection: React.FC = () => {
             <Eye className="h-5 w-5 text-rose-600" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900">Thumbnail CTR Contrast</h3>
+            <h3 className="text-sm font-bold text-slate-900">Thumbnail CTR Contrast</h3>
             <p className="mt-1 text-xs text-slate-500 leading-relaxed">
               Analyzes thumbnail visual framing, focal points, and text contrast for feed click-through-rates.
             </p>

@@ -189,9 +189,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <Zap className="h-4 w-4 fill-amber-600 text-amber-700" />
             </div>
             <div>
-              <p className="font-extrabold text-amber-950">Monthly Free Credits Depleted ({freemiumState.dailyCreditsUsed}/{freemiumState.maxFreeDailyCredits} Used)</p>
+              <p className="font-extrabold text-amber-950">Daily Free Credits Depleted ({freemiumState.dailyCreditsUsed}/{freemiumState.maxFreeDailyCredits} Used)</p>
               <p className="text-xs text-amber-800 font-medium">
-                Each video analysis requires 10 credits. You've used all 50 monthly free credits. Upgrade to HookZen Pro for unlimited analyses!
+                Each video analysis requires 10 credits. You've used all 50 daily free credits. Upgrade to HookZen Pro for unlimited analyses!
               </p>
             </div>
           </div>

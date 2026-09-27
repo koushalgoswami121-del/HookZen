@@ -200,7 +200,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                             Cancel Subscription?
                           </p>
                           <p className="text-[11px] text-amber-900 font-medium">
-                            Your Pro unlimited credits will be cancelled and your account will revert to the 50 monthly credit limit (10 credits per analysis).
+                            Your Pro unlimited credits will be cancelled and your account will revert to the 50 daily credit limit (10 credits per analysis).
                           </p>
                         </div>
                       </div>

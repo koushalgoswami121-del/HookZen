@@ -21,10 +21,9 @@ import {
   ChevronDown,
   Crown,
   Globe,
-  Users,
-  Eye,
   Search,
   FileAxis3D,
+  Users,
 } from 'lucide-react';
 import { AnalysisInput, IndustryType, LanguageType, PlatformType } from '../types';
 import { FreemiumState } from '../utils/freemiumManager';
@@ -93,7 +92,6 @@ export const InputForm: React.FC<InputFormProps> = ({
   const [transcript, setTranscript] = useState('');
   const [industry, setIndustry] = useState<IndustryType>('tech');
   const [followerCount, setFollowerCount] = useState<string>('');
-  const [highestViews, setHighestViews] = useState<string>('');
   const [targetPlatform, setTargetPlatform] = useState<PlatformType>('all');
   const [language, setLanguage] = useState<LanguageType>('en');
 
@@ -118,21 +116,19 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   const parseMetricString = (val: string): number => {
     if (!val) return 0;
-    const cleaned = val.toLowerCase().replace(/,/g, '').trim();
-
-    let multiplier = 1;
-    if (cleaned.includes('m') || cleaned.includes('million')) {
-      multiplier = 1000000;
-    } else if (cleaned.includes('k') || cleaned.includes('thousand')) {
-      multiplier = 1000;
-    } else if (cleaned.includes('b') || cleaned.includes('billion')) {
-      multiplier = 1000000000;
-    }
-
-    // Extract just the numbers/decimals using regex
-    const numericPart = cleaned.replace(/[^0-9.]/g, '');
-    const num = parseFloat(numericPart);
-    return isNaN(num) ? 0 : Math.round(num * multiplier);
+    const raw = val.trim();
+    // Billion
+    const bMatch = raw.match(/([0-9.]+)\s*(?:b|billion)\b/i);
+    if (bMatch) return Math.round(parseFloat(bMatch[1]) * 1000000000);
+    // Million
+    const mMatch = raw.match(/([0-9.]+)\s*(?:m|million)\b/i);
+    if (mMatch) return Math.round(parseFloat(mMatch[1]) * 1000000);
+    // Thousand
+    const kMatch = raw.match(/([0-9.]+)\s*(?:k|thousand)\b/i);
+    if (kMatch) return Math.round(parseFloat(kMatch[1]) * 1000);
+    // Plain number
+    const plain = raw.replace(/,/g, '').match(/[0-9.]+/);
+    return plain ? Math.round(parseFloat(plain[0])) : 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -154,7 +150,7 @@ export const InputForm: React.FC<InputFormProps> = ({
       transcript,
       industry,
       followerCount: Math.max(0, parseMetricString(followerCount)),
-      highestViews: Math.max(0, parseMetricString(highestViews)),
+      highestViews: 0,
       targetPlatform,
       language,
     });
@@ -362,10 +358,10 @@ export const InputForm: React.FC<InputFormProps> = ({
           </div>
         </div>
 
-        {/* Fields 4, 5, 6 & 7: Bottom Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-6">
+        {/* Fields 4, 5 & 6: Bottom Grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
           {/* Field 4: Niche / Industry */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             {(() => {
               const currentIndConfig = INDUSTRIES.find((ind) => ind.id === industry) || INDUSTRIES[0];
               const IconComp = currentIndConfig.icon;
@@ -398,7 +394,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           </div>
 
           {/* Field 5: Video Language */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
               <Globe className="h-4 w-4 text-amber-600" />
               5. Language
@@ -421,40 +417,22 @@ export const InputForm: React.FC<InputFormProps> = ({
             </div>
           </div>
 
-          {/* Field 6: Follower Count */}
-          <div className="md:col-span-3">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
-              <Users className="h-4 w-4 text-blue-600" />
-              6. Followers
-              <span className="text-rose-500">*</span>
-            </label>
+          {/* Field 6: Followers / Subscribers */}
+          <div className="md:col-span-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-slate-500" />
+                6. Followers / Subscribers
+              </label>
+              <span className="text-[11px] font-normal text-slate-400">optional</span>
+            </div>
             <div className="relative">
               <input
                 type="text"
                 value={followerCount}
                 onChange={(e) => setFollowerCount(e.target.value)}
-                placeholder="e.g. 1M or 500k"
-                className="w-full rounded-xl border border-blue-200 bg-blue-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-blue-300 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/60 shadow-2xs transition-all"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Field 7: Highest Views */}
-          <div className="md:col-span-3">
-            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
-              <Eye className="h-4 w-4 text-rose-600" />
-              7. Highest Views
-              <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={highestViews}
-                onChange={(e) => setHighestViews(e.target.value)}
-                placeholder="e.g. 1 million"
-                className="w-full rounded-xl border border-rose-200 bg-rose-50/40 px-3 py-3 text-sm font-semibold text-slate-900 placeholder:text-rose-300 focus:border-rose-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200/60 shadow-2xs transition-all"
-                required
+                placeholder="e.g. 5K, 25K, 100K, 1M"
+                className="w-full rounded-xl border border-slate-200/90 bg-white/90 px-3.5 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400/80 focus:border-amber-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-200/60 shadow-2xs transition-all"
               />
             </div>
           </div>

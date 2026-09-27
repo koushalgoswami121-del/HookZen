@@ -1000,9 +1000,9 @@ export function getRandomHookSuggestions(topicOrTitle: string, count: number = 6
     [array[i], array[j]] = [array[j], array[i]];
   }
 
-  // Extract key topic or fallback to [your topic]
+  // Extract key topic or fallback cleanly without placeholders
   const isGeneric = !topicOrTitle || ['tech', 'fitness', 'finance', 'real estate', 'gaming', 'e-commerce', 'fashion', 'general'].includes(topicOrTitle.toLowerCase().trim());
-  const cleanTopic = (!isGeneric && topicOrTitle.trim().length > 2) ? topicOrTitle.trim() : '[your topic]';
+  const cleanTopic = (!isGeneric && topicOrTitle.trim().length > 2) ? topicOrTitle.trim() : 'this niche';
 
   return array.slice(0, count).map((item) => {
     // Dynamically personalize placeholders if template has [Topic] or similar

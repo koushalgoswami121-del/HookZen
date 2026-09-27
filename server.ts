@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -214,6 +217,244 @@ async function startServer() {
     } catch (err: any) {
       console.error('Polar Checkout API error:', err);
       return res.status(500).json({ error: err.message || 'Failed to create Polar checkout session' });
+    }
+  });
+
+  // Helpers for Social Profile Scanner ($0 API cost, server-side fetch)
+  function parseMetricCount(str: string): number {
+    if (!str) return 0;
+    const raw = str.trim();
+    const bMatch = raw.match(/([0-9.]+)\s*(?:b|billion)\b/i);
+    if (bMatch) return Math.round(parseFloat(bMatch[1]) * 1000000000);
+    const mMatch = raw.match(/([0-9.]+)\s*(?:m|million)\b/i);
+    if (mMatch) return Math.round(parseFloat(mMatch[1]) * 1000000);
+    const kMatch = raw.match(/([0-9.]+)\s*(?:k|thousand)\b/i);
+    if (kMatch) return Math.round(parseFloat(kMatch[1]) * 1000);
+    const plain = raw.replace(/,/g, '').match(/[0-9.]+/);
+    return plain ? Math.round(parseFloat(plain[0])) : 0;
+  }
+
+  function cleanSocialHandle(input: string): string {
+    if (!input) return '';
+    let cleaned = input.trim();
+    cleaned = cleaned.replace(/^https?:\/\/(?:www\.)?(?:instagram\.com|youtube\.com|tiktok\.com)\//i, '');
+    cleaned = cleaned.replace(/^[@\/]+/, '').split(/[?#\/]/)[0].trim();
+    return cleaned;
+  }
+
+  async function fetchInstagramProfile(handle: string) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    try {
+      const url = `https://www.instagram.com/${encodeURIComponent(handle)}/`;
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        redirect: 'follow',
+      });
+
+      if (res.status === 404) {
+        return { success: false, error: `Instagram account @${handle} not found.` };
+      }
+
+      const html = await res.text();
+      const metaMatch = html.match(/content="([0-9.,KMBkmb]+\s+Followers,[^"]+)"/i)
+        || html.match(/property="og:description"\s+content="([^"]+)"/i)
+        || html.match(/name="description"\s+content="([^"]+)"/i);
+
+      if (metaMatch) {
+        const text = metaMatch[1];
+        const followersMatch = text.match(/([0-9.,KMBkmb]+)\s+Followers/i);
+        const followingMatch = text.match(/([0-9.,KMBkmb]+)\s+Following/i);
+        const postsMatch = text.match(/([0-9.,KMBkmb]+)\s+Posts/i);
+
+        if (followersMatch) {
+          const rawFollowers = followersMatch[1];
+          const followerCount = parseMetricCount(rawFollowers);
+          const rawPosts = postsMatch ? postsMatch[1] : null;
+          const postsCount = rawPosts ? parseMetricCount(rawPosts) : undefined;
+          const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i);
+          const displayName = titleMatch ? titleMatch[1].replace(/\s*\(@.*\).*$/, '').trim() : undefined;
+
+          return {
+            success: true,
+            platform: 'instagram',
+            handle,
+            displayName,
+            followers: rawFollowers,
+            followerCount,
+            posts: rawPosts,
+            postsCount,
+          };
+        }
+      }
+      return { success: false, error: `Could not extract public metrics for @${handle}. Account may be private or restricted.` };
+    } catch (err: any) {
+      return { success: false, error: err.name === 'AbortError' ? 'Instagram connection timed out' : err.message };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async function fetchYouTubeProfile(handle: string) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4500);
+    try {
+      const url = `https://www.youtube.com/@${encodeURIComponent(handle)}`;
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        redirect: 'follow',
+      });
+
+      if (res.status === 404) {
+        return { success: false, error: `YouTube channel @${handle} not found.` };
+      }
+
+      const html = await res.text();
+      const subMatch = html.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+)"\}\},"simpleText":"([^"]+)"\}/)
+        || html.match(/"subscriberCountText":\{"simpleText":"([^"]+)"\}/)
+        || html.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+)"\}\}\}/);
+
+      const videoMatch = html.match(/"videosCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+)"\}\},"simpleText":"([^"]+)"\}/)
+        || html.match(/"videosCountText":\{"runs":\[\{"text":"([^"]+)"\}/);
+
+      let rawSubs = subMatch ? (subMatch[2] || subMatch[1]) : null;
+      if (!rawSubs) {
+        const descMatch = html.match(/content="([^"]*?([0-9.,KMBkmb]+)\s+subscribers[^"]*)"/i);
+        if (descMatch) rawSubs = descMatch[2];
+      }
+
+      if (rawSubs) {
+        const cleanSubs = rawSubs.replace(/subscribers/i, '').trim();
+        const followerCount = parseMetricCount(cleanSubs);
+        const rawVideos = videoMatch ? (videoMatch[2] || videoMatch[1]) : null;
+        const postsCount = rawVideos ? parseMetricCount(rawVideos) : undefined;
+        const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i);
+        const displayName = titleMatch ? titleMatch[1].trim() : undefined;
+
+        return {
+          success: true,
+          platform: 'youtube',
+          handle,
+          displayName,
+          followers: cleanSubs,
+          followerCount,
+          posts: rawVideos,
+          postsCount,
+        };
+      }
+
+      return { success: false, error: `Could not extract subscriber count for YouTube channel @${handle}.` };
+    } catch (err: any) {
+      return { success: false, error: err.name === 'AbortError' ? 'YouTube connection timed out' : err.message };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async function fetchTikTokProfile(handle: string) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    try {
+      const url = `https://www.tiktok.com/@${encodeURIComponent(handle)}`;
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        redirect: 'follow',
+      });
+
+      if (res.status === 404) {
+        return { success: false, error: `TikTok account @${handle} not found.` };
+      }
+
+      const html = await res.text();
+      const rehydrationMatch = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application\/json">([\s\S]*?)<\/script>/);
+      if (rehydrationMatch) {
+        try {
+          const data = JSON.parse(rehydrationMatch[1]);
+          const stats = data?.__DEFAULT_SCOPE__?.['webapp.user-detail']?.userInfo?.stats;
+          if (stats && stats.followerCount !== undefined) {
+            return {
+              success: true,
+              platform: 'tiktok',
+              handle,
+              followers: `${stats.followerCount}`,
+              followerCount: Number(stats.followerCount),
+              postsCount: stats.videoCount ? Number(stats.videoCount) : undefined,
+            };
+          }
+        } catch (e) {
+          // ignore JSON parse error
+        }
+      }
+
+      const metaMatch = html.match(/content="([0-9.,KMBkmb]+\s+Followers,[^"]+)"/i)
+        || html.match(/name="description"\s+content="([^"]+)"/i);
+      if (metaMatch) {
+        const followersMatch = metaMatch[1].match(/([0-9.,KMBkmb]+)\s+Followers/i);
+        if (followersMatch) {
+          const rawFollowers = followersMatch[1];
+          return {
+            success: true,
+            platform: 'tiktok',
+            handle,
+            followers: rawFollowers,
+            followerCount: parseMetricCount(rawFollowers),
+          };
+        }
+      }
+
+      return { success: false, error: `Could not extract followers for @${handle}.` };
+    } catch (err: any) {
+      return {
+        success: false,
+        fallback: true,
+        error: err.name === 'AbortError' ? 'TikTok connection timed out (region/network block)' : err.message,
+      };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  // Social Profile Scanner API Route ($0 API cost, server-side fetch)
+  app.get('/api/fetch-social-profile', async (req, res) => {
+    try {
+      const rawPlatform = ((req.query.platform as string) || 'instagram').toLowerCase();
+      const rawHandle = ((req.query.handle as string) || '').trim();
+      const platform = (['instagram', 'youtube', 'tiktok'].includes(rawPlatform) ? rawPlatform : 'instagram') as
+        | 'instagram'
+        | 'youtube'
+        | 'tiktok';
+
+      const handle = cleanSocialHandle(rawHandle);
+      if (!handle) {
+        return res.status(400).json({ success: false, error: 'Social handle is required.' });
+      }
+
+      let result;
+      if (platform === 'instagram') {
+        result = await fetchInstagramProfile(handle);
+      } else if (platform === 'youtube') {
+        result = await fetchYouTubeProfile(handle);
+      } else if (platform === 'tiktok') {
+        result = await fetchTikTokProfile(handle);
+      }
+
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[Social Scanner API] Error:', err);
+      return res.status(500).json({ success: false, error: err.message || 'Failed to scan social profile.' });
     }
   });
 

@@ -19,10 +19,10 @@ export async function analyzeImageCanvas(
       contrastRatio: 0,
       colorVibrancy: 0,
       focalEntropy: 0,
-      visualScore: 35,
+      visualScore: 0,
       feedback: [
-        'No custom thumbnail or first frame uploaded.',
-        'Upload a vertical 9:16 high-contrast thumbnail with text overlay to maximize click-through rate.',
+        'No cover image was provided, so HookZen could not evaluate the visual first frame.',
+        'Upload a 9:16 cover image to enable visual first-frame analysis.',
       ],
     };
   }

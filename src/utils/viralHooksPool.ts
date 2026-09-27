@@ -628,9 +628,9 @@ export const VIRAL_HOOKS_100: HookIdea[] = [
 export function formatHookTemplate(template: string, inputString?: string): string {
   const isGenericIndustry = !inputString || ['tech', 'fitness', 'finance', 'real estate', 'gaming', 'fashion', 'e-commerce', 'general'].includes(inputString.toLowerCase().trim());
 
-  let topicToUse = '[your topic]';
-  let audienceToUse = '[your audience]';
-  let goalToUse = '[your goal]';
+  let topicToUse = 'this topic';
+  let audienceToUse = 'creators';
+  let goalToUse = 'grow faster';
 
   if (inputString && inputString.trim().length > 2 && !isGenericIndustry) {
     const insights = extractScriptInsights(inputString, inputString);
@@ -647,8 +647,10 @@ export function formatHookTemplate(template: string, inputString?: string): stri
     .replace(/\[industry\]/gi, topicToUse)
     .replace(/\[your industry\]/gi, topicToUse)
     .replace(/\[goal\]/gi, goalToUse)
-    .replace(/\[product\/service\]/gi, '[your product]')
+    .replace(/\[product\/service\]/gi, 'this strategy')
+    .replace(/\[your product\]/gi, 'this strategy')
     .replace(/\[target audience\]/gi, audienceToUse)
+    .replace(/\[[^\]]+\]/g, topicToUse)
     .replace(/\s+/g, ' ')
     .trim();
 }
