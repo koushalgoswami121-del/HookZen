@@ -200,10 +200,12 @@ export const ViralGrowthSection: React.FC = () => {
           </div>
 
           <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 p-6 sm:p-8 shadow-sm">
+            <h4 className="text-lg font-extrabold text-slate-800 mb-4">
+              Built by Creators, for Creators
+            </h4>
             <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
-              <p className="text-slate-700 leading-relaxed text-sm sm:text-base">
-                <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mr-1.5 inline-block">HookZen</span>
-                is built by creators, for creators, because we noticed how much time creators can spend wondering whether a script is actually strong enough to publish.
+              <p>
+                HookZen is built by creators, for creators, because we noticed how much time creators can spend wondering whether a script is actually strong enough to publish.
               </p>
               <p>
                 You can ask a general AI tool for feedback, but getting a detailed, structured analysis often means writing long prompts, asking follow-up questions, and piecing everything together yourself.
