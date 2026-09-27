@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Zap, TrendingUp, BarChart3, Target, Eye, ShieldCheck, Play, ArrowUpRight, HelpCircle, ChevronDown, User, Mail } from 'lucide-react';
+import { Flame, Zap, TrendingUp, BarChart3, Target, Eye, ShieldCheck, Play, ArrowUpRight, HelpCircle, ChevronDown, Mail } from 'lucide-react';
 
 export const ViralGrowthSection: React.FC = () => {
   return (
@@ -190,18 +190,18 @@ export const ViralGrowthSection: React.FC = () => {
           </div>
         </div>
 
-        {/* About Me */}
+        {/* About Us */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 border border-amber-200 text-amber-800 shadow-sm">
-              <User className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f8ebd0] overflow-hidden shadow-sm border border-[#eedab2]">
+              <img src="/logo.png" alt="HookZen Logo" className="h-full w-full object-cover" />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Built by a Creator</h3>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">About us</h3>
           </div>
 
           <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 p-6 sm:p-8 shadow-sm">
             <h4 className="text-lg font-extrabold text-slate-800 mb-4">
-              Built by a creator who wanted a better way to improve content.
+              Built by a Creator, for Creators
             </h4>
             <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
               <p>
