@@ -161,13 +161,6 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
       {/* Top Header Branding - Compact Single Screen Fit */}
       <div className="text-center mb-3 sm:mb-4">
-        <div className="flex flex-col items-center justify-center gap-1 mb-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-600">
-            HOOKZEN
-          </span>
-          <div className="h-0.5 w-6 bg-amber-400 rounded-full" />
-        </div>
-
         {/* Main Display Title */}
         <h1 className="text-2xl sm:text-3xl md:text-[32px] font-black text-slate-900 tracking-tight leading-tight">
           Choose your{' '}
@@ -239,24 +232,6 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Context Alert for Unauthenticated Users (Slim) */}
-      {!user && (
-        <div className="max-w-lg mx-auto mb-3 px-3 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-900 font-medium flex items-center justify-between gap-2 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-left">
-            <ShieldCheck className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-            <span>Sign in required to link your Pro access securely across devices.</span>
-          </div>
-          {onSignIn && (
-            <button
-              onClick={onSignIn}
-              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] shrink-0 cursor-pointer transition-all"
-            >
-              Sign In
-            </button>
-          )}
-        </div>
-      )}
 
       {/* 3 Pricing Cards Grid - Compact & Proportionate */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 lg:gap-4.5 items-stretch pt-0.5">
@@ -457,6 +432,24 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Context Alert for Unauthenticated Users (Below Pricing Cards) */}
+      {!user && (
+        <div className="max-w-lg mx-auto mt-3 px-3 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-900 font-medium flex items-center justify-between gap-2 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-left">
+            <ShieldCheck className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+            <span>Sign in required to link your Pro access securely across devices.</span>
+          </div>
+          {onSignIn && (
+            <button
+              onClick={onSignIn}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] shrink-0 cursor-pointer transition-all"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Bottom Trust & Guarantee Footer - Slim & Balanced */}
       <div className="mt-4 sm:mt-5 pt-3 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 text-center sm:text-left">
