@@ -162,26 +162,26 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       {/* Top Header Branding - Compact Single Screen Fit */}
       <div className="text-center mb-3 sm:mb-4">
         <div className="flex flex-col items-center justify-center gap-1 mb-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-500">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-600">
             HOOKZEN
           </span>
-          <div className="h-0.5 w-6 bg-orange-400 rounded-full" />
+          <div className="h-0.5 w-6 bg-amber-400 rounded-full" />
         </div>
 
         {/* Main Display Title */}
         <h1 className="text-2xl sm:text-3xl md:text-[32px] font-black text-slate-900 tracking-tight leading-tight">
-          Choose your plan. Create with{' '}
-          <span className="relative inline-block text-orange-500">
-            confidence.
+          Choose your{' '}
+          <span className="relative inline-block text-amber-600">
+            plan
             <svg
-              className="absolute -bottom-1 sm:-bottom-1.5 left-0 w-full text-orange-400 pointer-events-none"
-              viewBox="0 0 250 16"
+              className="absolute -bottom-1 sm:-bottom-1.5 left-0 w-full text-amber-400 pointer-events-none"
+              viewBox="0 0 120 16"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               preserveAspectRatio="none"
             >
               <path
-                d="M3 12C60 3 185 3 247 11C200 6 90 7 15 13"
+                d="M3 12C30 3 90 3 117 11C95 6 45 7 10 13"
                 stroke="currentColor"
                 strokeWidth="3.5"
                 strokeLinecap="round"
@@ -192,7 +192,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
         {/* Sub-headline */}
         <p className="text-xs sm:text-[13px] text-slate-500 font-medium leading-tight max-w-lg mx-auto mt-1">
-          Get AI-powered insights to make better short-form content. Choose the plan that fits your creator workflow.
+          Select what fits your creator workflow.
         </p>
 
         {/* Segmented Billing Control */}
@@ -202,7 +202,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               onClick={() => setBillingCycle('monthly')}
               className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer ${
                 billingCycle === 'monthly'
-                  ? 'bg-[#fef3e7] text-slate-900 border border-[#fed7aa] shadow-2xs font-bold'
+                  ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
@@ -214,13 +214,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               onClick={() => setBillingCycle('annual')}
               className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer ${
                 billingCycle === 'annual'
-                  ? 'bg-[#fef3e7] text-slate-900 border border-[#fed7aa] shadow-2xs font-bold'
+                  ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
               <span className="text-xs">Annual</span>
               <span className="text-[11px] text-slate-500">$79/yr</span>
-              <span className="rounded-full bg-orange-100 text-orange-700 text-[9px] font-black px-1.5 py-0.2 ml-0.5">
+              <span className="rounded-full bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.2 ml-0.5">
                 Save 34%
               </span>
             </button>
@@ -229,7 +229,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               onClick={() => setBillingCycle('lifetime')}
               className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer ${
                 billingCycle === 'lifetime'
-                  ? 'bg-[#fef3e7] text-slate-900 border border-[#fed7aa] shadow-2xs font-bold'
+                  ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
@@ -280,21 +280,21 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             {/* Features List */}
             <ul className="space-y-2 text-[11px] sm:text-xs text-slate-700 font-medium mb-4">
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>
                   <strong>50 Free Credits</strong> (Refreshes monthly = 5 audits)
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>0–100 Virality Score &amp; Grade</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>3s Hook Type &amp; Script Structure Audit</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>Actionable Script Strengths &amp; Tips</span>
               </li>
               <li className="flex items-start gap-2 text-slate-400">
@@ -313,16 +313,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         </div>
 
         {/* CARD 2: PRO CREATOR (HIGHLIGHTED & SUBTLY ELEVATED) */}
-        <div className="bg-white rounded-2xl border-2 border-orange-400 p-4 sm:p-5 flex flex-col justify-between shadow-lg shadow-orange-500/10 ring-2 ring-orange-400/10 relative transition-all md:-translate-y-1">
+        <div className="bg-white rounded-2xl border-2 border-amber-500 p-4 sm:p-5 flex flex-col justify-between shadow-lg shadow-amber-500/15 ring-2 ring-amber-400/20 relative transition-all md:-translate-y-1">
           {/* Top Right Pill Badge */}
-          <div className="absolute top-4 right-4 bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-2xs">
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border border-amber-400/80 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-2xs">
             Most Popular
           </div>
 
           <div>
             {/* Top Left Icon */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 border border-orange-200/80 text-orange-600 mb-3">
-              <Crown className="h-4.5 w-4.5 text-orange-500 fill-orange-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 border border-amber-200/80 text-amber-700 mb-3">
+              <Crown className="h-4.5 w-4.5 text-amber-500 fill-amber-400" />
             </div>
 
             <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Pro Creator</h3>
@@ -334,7 +334,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 <>
                   <span className="text-3xl sm:text-4xl font-black text-slate-900">$79</span>
                   <span className="text-xs font-semibold text-slate-500">/year</span>
-                  <span className="ml-1.5 text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.2 rounded-full border border-orange-200/80">
+                  <span className="ml-1.5 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded-full border border-amber-200/80">
                     Save 34%
                   </span>
                 </>
@@ -349,25 +349,25 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             {/* Features List with Custom Icons */}
             <ul className="space-y-2 text-[11px] sm:text-xs text-slate-800 font-medium mb-4">
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <span>
                   <strong>No Ads:</strong> 100% ad-free
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Infinity className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                <Infinity className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <span>
                   <strong>Unlimited Audits:</strong> Analyze without limits
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <TrendingUp className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                <TrendingUp className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <span>
                   <strong>Deep Analysis:</strong> Detailed breakdown
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Search className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                <Search className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <span>
                   <strong>FYP &amp; SEO:</strong> Keyword and search insights
                 </span>
@@ -378,13 +378,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           <button
             onClick={() => handleTogglePro(true, billingCycle === 'annual' ? 'annual' : 'monthly')}
             disabled={isActivating || (freemiumState.isPro && freemiumState.planType !== 'lifetime')}
-            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-black tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer ${
               freemiumState.isPro && freemiumState.planType !== 'lifetime'
                 ? 'bg-amber-400 text-slate-950 cursor-default shadow-xs'
-                : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-orange-500/20'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80 shadow-amber-500/20'
             }`}
           >
-            <Crown className="h-3.5 w-3.5 fill-white text-white" />
+            <Crown className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
             <span>
               {freemiumState.isPro && freemiumState.planType !== 'lifetime'
                 ? 'Active Pro Subscription'
@@ -398,14 +398,14 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         {/* CARD 3: LIFETIME PASS */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-xs hover:shadow-sm transition-all relative">
           {/* Top Right Badge */}
-          <div className="absolute top-4 right-4 bg-orange-50 text-orange-600 border border-orange-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+          <div className="absolute top-4 right-4 bg-amber-50 text-amber-700 border border-amber-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full">
             Pay Once, Own Forever
           </div>
 
           <div>
             {/* Top Left Icon */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 border border-orange-200/80 text-orange-500 mb-3">
-              <Zap className="h-4.5 w-4.5 text-orange-500 fill-orange-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 border border-amber-200/80 text-amber-600 mb-3">
+              <Zap className="h-4.5 w-4.5 text-amber-500 fill-amber-400" />
             </div>
 
             <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Lifetime Pass</h3>
@@ -422,19 +422,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             {/* Features List */}
             <ul className="space-y-2 text-[11px] sm:text-xs text-slate-700 font-medium mb-4">
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>Everything Included in Yearly features</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>No Monthly Subscription or Auto-Renews</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>All Current &amp; Future Pro Features</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5 stroke-[3]" />
+                <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>Priority server speed</span>
               </li>
             </ul>
@@ -443,10 +443,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           <button
             onClick={() => handleTogglePro(true, 'lifetime')}
             disabled={isActivating || (freemiumState.isPro && freemiumState.planType === 'lifetime')}
-            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-black tracking-wide transition-all border-2 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all border flex items-center justify-center gap-1.5 cursor-pointer ${
               freemiumState.isPro && freemiumState.planType === 'lifetime'
                 ? 'bg-emerald-600 text-white border-emerald-600 cursor-default'
-                : 'border-orange-400 text-orange-600 hover:bg-orange-50 shadow-2xs'
+                : 'border-amber-400/80 bg-amber-50/50 hover:bg-amber-100/70 text-amber-950 shadow-2xs'
             }`}
           >
             <span>
@@ -488,7 +488,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             <p className="text-[11px] font-bold text-slate-900 leading-tight">Need help?</p>
             <p className="text-[10px] text-slate-500 leading-tight">
               Contact{' '}
-              <a href="mailto:support@hookzen.me" className="text-orange-600 hover:underline font-semibold">
+              <a href="mailto:support@hookzen.me" className="text-amber-600 hover:text-amber-700 hover:underline font-semibold">
                 support@hookzen.me
               </a>
             </p>
