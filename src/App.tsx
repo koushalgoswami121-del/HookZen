@@ -46,7 +46,7 @@ import { Smartphone, ArrowLeft, BookOpen, TrendingUp, Zap, Flame, Target, Activi
 import { AnalyzingAnimation } from './components/AnalyzingAnimation';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'calculator' | 'blog' | 'payment_success' | 'payment_cancel' | 'adminspace'>('calculator');
+  const [currentView, setCurrentView] = useState<'calculator' | 'blog' | 'payment_success' | 'payment_cancel' | 'adminspace' | 'pricing'>('calculator');
   const [blogSlug, setBlogSlug] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentResult, setCurrentResult] = useState<ViralScoreResult | null>(null);
@@ -271,6 +271,8 @@ export default function App() {
 
       if (path === '/adminspace' || path.startsWith('/adminspace')) {
         setCurrentView('adminspace');
+      } else if (path === '/pricing' || path.startsWith('/pricing')) {
+        setCurrentView('pricing');
       } else if (
         path.includes('/payment/success') ||
         path.includes('/success') ||
@@ -473,6 +475,21 @@ export default function App() {
                 handleOpenPricing('general');
               }}
               onGoHome={handleGoHome}
+            />
+          ) : currentView === 'pricing' ? (
+            <PricingModal
+              isOpen={true}
+              isStandalonePage={true}
+              onClose={handleGoHome}
+              freemiumState={freemiumState}
+              onUpdateState={(newState) => setFreemiumState(newState)}
+              reason={pricingReason}
+              user={user}
+              onSignIn={() => {
+                setAuthModalMode('signin');
+                setIsAuthModalOpen(true);
+              }}
+              isSigningIn={isSigningIn}
             />
           ) : currentView === 'blog' ? (
             <BlogView
