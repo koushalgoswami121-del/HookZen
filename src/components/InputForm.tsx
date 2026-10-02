@@ -250,7 +250,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-2xl">
           Analyze Your Video
         </h2>
-        <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+        <p className="hidden sm:block mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500 font-medium">
           Enter your video details below to calculate viral reach potential and receive targeted optimization advice.
         </p>
       </div>
