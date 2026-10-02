@@ -3,12 +3,14 @@ dotenv.config();
 dotenv.config({ path: '.env.local', override: true });
 import express from 'express';
 import path from 'path';
+import https from 'https';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Polar } from '@polar-sh/sdk';
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks';
 import { generateSmartScriptHooks } from './src/utils/scriptBrain';
 import { updateUserPremiumStatus, extractUserFromPolarEvent } from './src/lib/serverFirebase';
+import firebaseConfigData from './firebase-applet-config.json';
 
 async function startServer() {
   const app = express();
@@ -25,33 +27,109 @@ async function startServer() {
     });
   }
 
-  // Proxy Firebase auth handler routes (/__/auth/*, /__/firebase/*)
-  // Required so authDomain can be set to hookzen.me — Google shows
-  // "to continue to hookzen.me" instead of the raw firebaseapp.com domain.
-  // Firebase Hosting normally serves these; we forward them transparently.
-  const FIREBASE_HOSTING_ORIGIN = 'https://ai-studio-applet-webapp-20a1f.firebaseapp.com';
-  app.use('/__/', async (req: express.Request, res: express.Response) => {
+  // Transparent Firebase Auth Reverse Proxy (/__/auth/*, /__/firebase/*)
+  // Transparently forwards all requests to Firebase Hosting (<projectId>.firebaseapp.com).
+  // Required so authDomain can be set to hookzen.me (custom domain) per Firebase documentation.
+  // Fully forwards HTTP method, headers, cookies, query strings, request body, and response headers.
+  const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || (firebaseConfigData as any)?.projectId || 'ai-studio-applet-webapp-20a1f';
+  const FIREBASE_HOSTING_DOMAIN = `${FIREBASE_PROJECT_ID}.firebaseapp.com`;
+  const HOP_BY_HOP_HEADERS = new Set([
+    'connection',
+    'keep-alive',
+    'transfer-encoding',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailer',
+    'upgrade',
+  ]);
+
+  app.use('/__', (req: express.Request, res: express.Response) => {
     try {
-      const targetUrl = `${FIREBASE_HOSTING_ORIGIN}/__/${req.url.replace(/^\//, '')}`;
-      const upstream = await fetch(targetUrl, {
-        method: req.method,
-        headers: {
-          'accept': req.headers['accept'] || '*/*',
-          'accept-language': (req.headers['accept-language'] as string) || 'en',
-          'user-agent': (req.headers['user-agent'] as string) || 'hookzen-proxy/1.0',
+      const proxyHeaders: Record<string, string | string[]> = {};
+      for (const [key, val] of Object.entries(req.headers)) {
+        if (val === undefined) continue;
+        const lower = key.toLowerCase();
+        if (lower === 'host' || HOP_BY_HOP_HEADERS.has(lower)) continue;
+        proxyHeaders[lower] = val;
+      }
+
+      proxyHeaders['host'] = FIREBASE_HOSTING_DOMAIN;
+      proxyHeaders['x-forwarded-host'] = (req.headers['x-forwarded-host'] || req.headers.host || 'hookzen.me') as string;
+      proxyHeaders['x-forwarded-proto'] = (req.headers['x-forwarded-proto'] as string) || (req.secure ? 'https' : 'http');
+      const clientIp = req.ip || req.socket.remoteAddress;
+      if (clientIp) {
+        proxyHeaders['x-forwarded-for'] = req.headers['x-forwarded-for']
+          ? `${req.headers['x-forwarded-for']}, ${clientIp}`
+          : clientIp;
+      }
+
+      const proxyReq = https.request(
+        {
+          protocol: 'https:',
+          hostname: FIREBASE_HOSTING_DOMAIN,
+          port: 443,
+          method: req.method,
+          path: req.originalUrl,
+          headers: proxyHeaders,
         },
-        redirect: 'follow',
+        (proxyRes) => {
+          const clientHost = ((req.headers['x-forwarded-host'] || req.headers.host || 'hookzen.me') as string).split(':')[0];
+          const clientProto = (req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http')) as string;
+
+          res.status(proxyRes.statusCode || 200);
+
+          for (const [headerKey, headerVal] of Object.entries(proxyRes.headers)) {
+            if (headerVal === undefined) continue;
+            const lower = headerKey.toLowerCase();
+            if (HOP_BY_HOP_HEADERS.has(lower)) continue;
+
+            if (lower === 'set-cookie') {
+              const cookies = Array.isArray(headerVal) ? headerVal : [headerVal];
+              const rewrittenCookies = cookies.map((c) =>
+                c.replace(
+                  new RegExp(`domain=\\.?${FIREBASE_HOSTING_DOMAIN}`, 'gi'),
+                  `domain=${clientHost}`
+                )
+              );
+              res.setHeader('set-cookie', rewrittenCookies);
+            } else if (lower === 'location' && typeof headerVal === 'string') {
+              const rewrittenLocation = headerVal.replace(
+                new RegExp(`^https?://${FIREBASE_HOSTING_DOMAIN}`, 'i'),
+                `${clientProto}://${clientHost}`
+              );
+              res.setHeader('location', rewrittenLocation);
+            } else {
+              res.setHeader(headerKey, headerVal);
+            }
+          }
+
+          if (!res.getHeader('access-control-allow-origin')) {
+            res.setHeader('access-control-allow-origin', '*');
+          }
+
+          proxyRes.pipe(res);
+        }
+      );
+
+      proxyReq.on('error', (err) => {
+        console.error('[Firebase Auth Proxy Error]:', err.message);
+        if (!res.headersSent) {
+          res.status(502).json({ error: 'Firebase auth proxy error', detail: err.message });
+        }
       });
-      const contentType = upstream.headers.get('content-type') || 'text/html; charset=utf-8';
-      res.setHeader('Content-Type', contentType);
-      // Allow the auth handler to post messages across origins
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.status(upstream.status);
-      const body = await upstream.text();
-      res.send(body);
+
+      req.on('aborted', () => proxyReq.destroy());
+      res.on('close', () => {
+        if (!proxyReq.destroyed) proxyReq.destroy();
+      });
+
+      req.pipe(proxyReq);
     } catch (err: any) {
-      console.error('[Firebase Auth Proxy] Error:', err.message);
-      res.status(502).json({ error: 'Firebase auth proxy error', detail: err.message });
+      console.error('[Firebase Auth Proxy Setup Error]:', err.message);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Firebase auth proxy error', detail: err.message });
+      }
     }
   });
 
