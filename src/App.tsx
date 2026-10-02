@@ -92,6 +92,8 @@ export default function App() {
   const handleRedirectToHomeAfterSignIn = () => {
     setIsAuthModalOpen(false);
     setIsPricingOpen(false);
+    setIsHistoryOpen(false);
+    setIsAccountSettingsOpen(false);
     setCurrentResult(null);
     setCurrentView('calculator');
     if (window.location.pathname !== '/') {
@@ -127,7 +129,7 @@ export default function App() {
     setIsAccountSettingsOpen(false);
   };
 
-  // Check for redirect sign-in return (essential for mobile & tablet browsers)
+  // Check for redirect sign-in return (essential for mobile & tablet browsers fallback)
   useEffect(() => {
     handleAuthRedirectResult().then((redirectUser) => {
       if (redirectUser) {
@@ -146,16 +148,18 @@ export default function App() {
   // Listen to Firebase Auth state & sync Firestore history and freemium profile per user account
   useEffect(() => {
     const unsubscribe = subscribeToAuth(async (currentUser) => {
+      const isInitial = isInitialAuthRef.current;
+      isInitialAuthRef.current = false;
+
       const hadNoUser = prevUserRef.current === null;
       prevUserRef.current = currentUser;
       setUser(currentUser);
 
       if (currentUser) {
         // Automatically route to home page if user just signed in
-        if (hadNoUser && !isInitialAuthRef.current) {
+        if (hadNoUser && !isInitial) {
           handleRedirectToHomeAfterSignIn();
         }
-        isInitialAuthRef.current = false;
         try {
           // 1. Sync User Freemium Profile from Firestore & IP usage (prevents incognito & account switching credit exploits)
           const cloudProfile = await fetchUserProfileFromFirestore(currentUser.uid);
@@ -716,10 +720,7 @@ export default function App() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSignIn={async () => {
-          setIsAuthModalOpen(false);
-          await handleSignIn();
-        }}
+        onSignIn={handleSignIn}
         onSuccess={handleRedirectToHomeAfterSignIn}
         isSigningIn={isSigningIn}
         mode={authModalMode}

@@ -259,18 +259,8 @@ export const syncUserProfileToFirestore = async (user: User): Promise<void> => {
   }
 };
 
-// Google Sign In Helper (supports Desktop popups, mobile/tablet redirects, and popup-blocked fallback)
+// Google Sign In Helper (reliable cross-platform popup with redirect fallback if popup is blocked)
 export const loginWithGoogle = async (): Promise<User | null> => {
-  // Mobile & tablet browsers block popups or have cross-origin ITP issues; use redirect
-  if (isMobileOrTablet()) {
-    try {
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    } catch (redirectErr) {
-      console.warn('Mobile redirect sign-in warning:', redirectErr);
-    }
-  }
-
   try {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
@@ -279,20 +269,21 @@ export const loginWithGoogle = async (): Promise<User | null> => {
     }
     return null;
   } catch (error: any) {
-    if (
-      error?.code === 'auth/popup-blocked' ||
-      error?.code === 'auth/cancelled-popup-request'
-    ) {
-      console.log('Popup blocked or cancelled, falling back to redirect...');
+    if (error?.code === 'auth/popup-blocked') {
+      console.log('Popup blocked by browser, falling back to redirect...');
       try {
         await signInWithRedirect(auth, googleProvider);
         return null;
       } catch (redirectError) {
-        console.error('Redirect sign-in failed:', redirectError);
+        console.error('Redirect sign-in fallback failed:', redirectError);
+        throw redirectError;
       }
     }
-    if (error?.code === 'auth/popup-closed-by-user') {
-      console.log('Google Sign-In popup closed by user.');
+    if (
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request'
+    ) {
+      console.log('Google Sign-In popup closed or cancelled by user.');
       return null;
     }
     console.error('Error signing in with Google:', error);
