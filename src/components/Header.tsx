@@ -142,11 +142,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="max-w-[100px] truncate font-semibold">
                   {user.displayName ? user.displayName.split(' ')[0] : 'Account'}
                 </span>
-                {isProActive && (
-                  <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-black uppercase text-slate-950">
-                    PRO
-                  </span>
-                )}
                 <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
               </button>
 
