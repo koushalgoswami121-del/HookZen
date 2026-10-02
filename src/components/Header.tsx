@@ -38,7 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const remainingCredits = freemiumState.isPro
+  const isProActive = Boolean(user && freemiumState.isPro);
+  const remainingCredits = isProActive
     ? Infinity
     : Math.max(0, freemiumState.maxFreeDailyCredits + (freemiumState.bonusCredits || 0) - freemiumState.dailyCreditsUsed);
 
@@ -96,14 +97,14 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Credits Display Badge */}
           <button
             onClick={onOpenPricing}
-            className={`flex items-center gap-1 sm:gap-1.5 rounded-full border px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs font-bold transition-all shadow-2xs cursor-pointer ${freemiumState.isPro
+            className={`flex items-center gap-1 sm:gap-1.5 rounded-full border px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs font-bold transition-all shadow-2xs cursor-pointer ${isProActive
               ? 'bg-amber-100/90 border-amber-300 text-amber-950 hover:bg-amber-200/90'
               : 'bg-white/90 border-slate-200/90 text-slate-800 hover:bg-white hover:border-slate-300'
               }`}
-            title={freemiumState.isPro ? 'Pro Subscription Active' : 'Free Credits (Refreshes Monthly) - Click for Pro'}
+            title={isProActive ? 'Pro Subscription Active' : 'Free Credits (Refreshes Monthly) - Click for Pro'}
             aria-label="View Credits and Subscription Details"
           >
-            {freemiumState.isPro ? (
+            {isProActive ? (
               <>
                 <Crown className="h-3.5 w-3.5 text-amber-600 fill-amber-500" aria-hidden="true" />
                 <span className="font-extrabold text-amber-950">PRO<span className="hidden sm:inline"> Member</span></span>
@@ -141,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="max-w-[100px] truncate font-semibold">
                   {user.displayName ? user.displayName.split(' ')[0] : 'Account'}
                 </span>
-                {freemiumState.isPro && (
+                {isProActive && (
                   <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-black uppercase text-slate-950">
                     PRO
                   </span>
@@ -206,22 +207,22 @@ export const Header: React.FC<HeaderProps> = ({
                     className="w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
-                      {freemiumState.isPro ? (
+                      {isProActive ? (
                         <Crown className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
                       ) : (
                         <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
                       )}
                       <span>
-                        {freemiumState.isPro ? 'Pro Subscription' : 'Upgrade to Pro'}
+                        {isProActive ? 'Pro Subscription' : 'Upgrade to Pro'}
                       </span>
                     </div>
                     <span
-                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase ${freemiumState.isPro
+                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase ${isProActive
                         ? 'bg-amber-100 text-amber-900'
                         : 'bg-amber-50 text-amber-800 border border-amber-200'
                         }`}
                     >
-                      {freemiumState.isPro
+                      {isProActive
                         ? freemiumState.planType === 'lifetime'
                           ? 'LIFETIME'
                           : 'PRO'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { Header } from './components/Header';
 import { InputForm } from './components/InputForm';
@@ -25,6 +25,7 @@ import {
   useCredit,
   checkAndSyncIpCredits,
   toggleProStatus,
+  resetFreemiumToSignedOut,
   FreemiumState,
 } from './utils/freemiumManager';
 import {
@@ -60,6 +61,20 @@ export default function App() {
 
   // Freemium Pricing State
   const [freemiumState, setFreemiumState] = useState<FreemiumState>(() => getFreemiumState());
+
+  // Authoritative Effective Freemium State: Unauthenticated users can never have Pro privileges
+  const effectiveFreemiumState: FreemiumState = useMemo(() => {
+    if (!user && freemiumState.isPro) {
+      return {
+        ...freemiumState,
+        isPro: false,
+        planType: 'free',
+        bonusCredits: 0,
+      };
+    }
+    return freemiumState;
+  }, [user, freemiumState]);
+
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [pricingReason, setPricingReason] = useState<'limit_reached' | 'pro_feature_locked' | 'general'>('general');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -90,7 +105,7 @@ export default function App() {
       setUser(null);
     }
     setHistory([]);
-    const updated = toggleProStatus(false, 'free', true);
+    const updated = resetFreemiumToSignedOut();
     setFreemiumState(updated);
     setIsAccountSettingsOpen(false);
   };
@@ -114,8 +129,8 @@ export default function App() {
           const ip = await getPublicIp();
           const ipRecord = await fetchIpUsageFromFirestore(ip);
 
-          // Preserve Pro status if either cloud profile OR local state has Pro activated
-          const isPaid = Boolean(cloudProfile?.isPro) || localState.isPro;
+          // Pro status is strictly derived from the authenticated user's verified cloud profile
+          const isPaid = Boolean(cloudProfile?.isPro);
 
           const today = localState.lastResetDate;
           const cloudUsed = (cloudProfile && cloudProfile.lastResetDate === today) ? Number(cloudProfile.dailyCreditsUsed || 0) : 0;
@@ -183,6 +198,17 @@ export default function App() {
           console.warn('Error synchronizing cloud history & profile:', e);
         }
       } else {
+        // User is signed out / anonymous: reset Pro status, plan type, and account-bound bonus credits
+        try {
+          const cleanState = resetFreemiumToSignedOut();
+          setFreemiumState(cleanState);
+          checkAndSyncIpCredits(false).then((synced) => {
+            setFreemiumState(synced);
+          });
+        } catch (e) {
+          console.warn('Error resetting signed out state:', e);
+        }
+
         // Fallback to local storage when signed out
         try {
           const saved = localStorage.getItem('go_viral_history');
@@ -257,7 +283,17 @@ export default function App() {
 
   const handleSignOut = async () => {
     try {
+      // 1. Instantly reset Pro status in state and localStorage
+      const cleanState = resetFreemiumToSignedOut();
+      setFreemiumState(cleanState);
+      setUser(null);
+
+      // 2. Perform Firebase sign out
       await logout();
+
+      // 3. Re-sync public IP credits for anonymous browsing
+      const ipSynced = await checkAndSyncIpCredits(false);
+      setFreemiumState(ipSynced);
     } catch (err) {
       console.error('Sign out error:', err);
     }
@@ -341,14 +377,23 @@ export default function App() {
 
   // Run Analysis
   const handleAnalyze = async (input: AnalysisInput) => {
+    // Authoritative Pro status: User must be authenticated AND have Pro active
+    const isProUser = Boolean(user && effectiveFreemiumState.isPro);
+
     // Check & sync IP credits first, but bypass if the user is authenticated via an account
     const syncedState = await checkAndSyncIpCredits(!!user);
+    if (!user && syncedState.isPro) {
+      syncedState.isPro = false;
+      syncedState.planType = 'free';
+      syncedState.bonusCredits = 0;
+      saveFreemiumState(syncedState);
+    }
     setFreemiumState(syncedState);
 
     // Check if free user has sufficient credits remaining (< 10 credits) on this IP address or device
     const remaining = getRemainingCredits();
     const stateWithBonus = syncedState.maxFreeDailyCredits + (syncedState.bonusCredits || 0) - syncedState.dailyCreditsUsed;
-    if (!syncedState.isPro && (stateWithBonus < 10 || remaining < 10)) {
+    if (!isProUser && (stateWithBonus < 10 || remaining < 10)) {
       handleOpenPricing('limit_reached');
       return;
     }
@@ -367,7 +412,9 @@ export default function App() {
       }
 
       // Deduct 10 credits per analysis if not Pro
-      useCredit(10);
+      if (!isProUser) {
+        useCredit(10);
+      }
       const updatedState = getFreemiumState();
 
       // FEEDBACK INTERCEPTION LOGIC
@@ -447,7 +494,7 @@ export default function App() {
           onOpenBlog={handleOpenBlog}
           onGoHome={handleGoHome}
           isBlogActive={currentView === 'blog'}
-          freemiumState={freemiumState}
+          freemiumState={effectiveFreemiumState}
           onOpenPricing={() => handleOpenPricing('general')}
           user={user}
           onSignIn={handleSignIn}
@@ -481,7 +528,7 @@ export default function App() {
               isOpen={true}
               isStandalonePage={true}
               onClose={handleGoHome}
-              freemiumState={freemiumState}
+              freemiumState={effectiveFreemiumState}
               onUpdateState={(newState) => setFreemiumState(newState)}
               reason={pricingReason}
               user={user}
@@ -567,7 +614,7 @@ export default function App() {
                   <InputForm
                     onAnalyze={handleAnalyze}
                     isAnalyzing={isAnalyzing}
-                    freemiumState={freemiumState}
+                    freemiumState={effectiveFreemiumState}
                     onOpenPricing={handleOpenPricing}
                   />
                   <ViralGrowthSection />
@@ -576,7 +623,7 @@ export default function App() {
                 <AnalysisDashboard
                   result={currentResult}
                   onReset={handleNewAnalysis}
-                  freemiumState={freemiumState}
+                  freemiumState={effectiveFreemiumState}
                   onOpenPricing={handleOpenPricing}
                 />
               )}
@@ -589,7 +636,7 @@ export default function App() {
       <PricingModal
         isOpen={isPricingOpen}
         onClose={() => setIsPricingOpen(false)}
-        freemiumState={freemiumState}
+        freemiumState={effectiveFreemiumState}
         onUpdateState={(updated) => {
           setFreemiumState(updated);
           if (user) {
@@ -621,7 +668,7 @@ export default function App() {
           setCurrentView('calculator');
         }}
         onClearHistory={handleClearHistory}
-        freemiumState={freemiumState}
+        freemiumState={effectiveFreemiumState}
         onOpenPricing={handleOpenPricing}
         user={user}
         onSignIn={handleSignIn}
@@ -665,7 +712,7 @@ export default function App() {
         isOpen={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
         user={user}
-        freemiumState={freemiumState}
+        freemiumState={effectiveFreemiumState}
         onCancelSubscription={handleCancelSubscription}
         onDeleteAccount={handleDeleteAccount}
       />

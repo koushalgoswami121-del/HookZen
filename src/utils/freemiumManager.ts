@@ -178,3 +178,17 @@ export function resetDailyCredits(): FreemiumState {
   return state;
 }
 
+export function resetFreemiumToSignedOut(): FreemiumState {
+  const today = getTodayDateString();
+  const state = getFreemiumState();
+  const resetState: FreemiumState = {
+    ...state,
+    isPro: false,
+    planType: 'free',
+    bonusCredits: 0,
+    lastResetDate: today,
+  };
+  saveFreemiumState(resetState);
+  return resetState;
+}
+
