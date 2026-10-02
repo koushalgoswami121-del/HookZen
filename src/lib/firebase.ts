@@ -33,10 +33,12 @@ import {
 import firebaseConfigData from '../../firebase-applet-config.json';
 import { ViralScoreResult } from '../types';
 
-// Firebase configuration with custom authDomain (hookzen.me) proxied via server.ts reverse proxy
+// Always use Firebase's default authDomain (firebaseapp.com) for Google authentication.
+// Custom domain proxies (e.g. on Vercel) break postMessage and 308-redirect OAuth requests.
+// Firebase's firebaseapp.com domain works universally across mobile, tablet, and desktop.
 const firebaseConfig = {
   apiKey: firebaseConfigData.apiKey,
-  authDomain: firebaseConfigData.authDomain || 'hookzen.me',
+  authDomain: `${firebaseConfigData.projectId}.firebaseapp.com`,
   projectId: firebaseConfigData.projectId,
   storageBucket: firebaseConfigData.storageBucket,
   messagingSenderId: firebaseConfigData.messagingSenderId,
@@ -252,20 +254,8 @@ export const syncUserProfileToFirestore = async (user: User): Promise<void> => {
   }
 };
 
-// Google Sign In Helper (Desktop -> popup, Mobile/Tablet -> redirect)
+// Google Sign In Helper (reliable cross-platform popup with redirect fallback if popup is blocked)
 export const loginWithGoogle = async (): Promise<User | null> => {
-  // Mobile & tablet browsers prefer redirect sign-in to avoid popup blocking and cross-window sheet issues
-  if (isMobileOrTablet()) {
-    try {
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    } catch (redirectErr) {
-      console.warn('Mobile redirect sign-in warning:', redirectErr);
-      throw redirectErr;
-    }
-  }
-
-  // Desktop browsers use popup for optimal user experience
   try {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
