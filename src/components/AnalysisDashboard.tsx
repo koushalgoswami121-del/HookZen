@@ -46,6 +46,7 @@ import {
   BookOpen,
   Video,
   AlertCircle,
+  ArrowLeft,
 } from 'lucide-react';
 import { ScoringComponentKey, ViralScoreResult } from '../types';
 import { formatTo12HrTime } from '../utils/formatTime';
@@ -441,7 +442,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-xl mx-auto flex items-center justify-center gap-2 flex-wrap">
           <span>Mathematically transparent pre-publish script analysis and retention diagnosis.</span>
           {result.timestamp && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200/80">
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200/80">
               <Clock className="h-3 w-3 text-amber-600" />
               <span>{formatTo12HrTime(result.timestamp)}</span>
             </span>
@@ -1085,6 +1086,20 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
               </div>
             </div>
 
+            {/* Analyze Another Video Button below Areas to Improve */}
+            {onReset && (
+              <div className="flex items-center justify-center pt-3 pb-1 no-print">
+                <button
+                  onClick={onReset}
+                  className="w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 active:scale-[0.98]"
+                  aria-label="Analyze another video"
+                >
+                  <ArrowLeft className="h-4 w-4 text-slate-600" />
+                  <span>Analyze Another Video</span>
+                </button>
+              </div>
+            )}
+
             {/* Bottom Hide Analysis Button */}
             <div className="flex items-center justify-center pt-2 pb-2 no-print">
               <button
@@ -1144,14 +1159,14 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           <span>{isGeneratingPdf ? 'Downloading Report...' : 'Download Report'}</span>
         </button>
 
-        {/* Button 2: Start a New Analysis */}
+        {/* Button 2: Analyze Another Video */}
         {onReset && (
           <button
             onClick={onReset}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white/90 px-5 py-3 sm:py-3.5 text-xs font-bold text-slate-800 hover:bg-white hover:border-slate-300 shadow-2xs transition-all cursor-pointer active:scale-[0.98]"
+            className="w-auto self-center sm:self-auto flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white/90 px-5 py-3 sm:py-3.5 text-xs font-bold text-slate-800 hover:bg-white hover:border-slate-300 shadow-2xs transition-all cursor-pointer active:scale-[0.98]"
           >
             <RotateCcw className="h-4 w-4 text-slate-600" />
-            <span>Start New Analysis</span>
+            <span>Analyze Another Video</span>
           </button>
         )}
       </div>

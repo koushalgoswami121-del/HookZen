@@ -633,17 +633,17 @@ export default function App() {
 
               {/* Action bar when result is active */}
               {currentResult && (
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
                   <button
                     onClick={handleNewAnalysis}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="inline-flex w-auto items-center justify-center gap-2 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 active:scale-[0.98]"
                     aria-label="Analyze another video"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4 text-slate-600" />
                     <span>Analyze Another Video</span>
                   </button>
 
-                  <div className="flex items-center justify-center sm:justify-end gap-2 text-xs text-slate-500 font-medium">
+                  <div className="hidden sm:flex items-center justify-end gap-2 text-xs text-slate-500 font-medium">
                     <span>Analyzed at</span>
                     <span className="text-slate-800 font-bold">{formatTo12HrTime(currentResult.timestamp)}</span>
                   </div>
