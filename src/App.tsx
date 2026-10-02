@@ -502,8 +502,8 @@ export default function App() {
               {/* Hero Banner Section */}
               {!currentResult && (
                 <div className="text-center max-w-4xl mx-auto space-y-4 sm:space-y-6 pt-1 sm:pt-4 pb-2">
-                  {/* Top Tag & Viral Live Growth Badge */}
-                  <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                  {/* Top Tag & Viral Live Growth Badge - Hidden on mobile screens */}
+                  <div className="hidden sm:flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
                     <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-sky-50 px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm font-extrabold text-slate-800 border border-sky-200/80 shadow-2xs">
                       <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-600" />
                       <span>Short-Form Video Intelligence</span>
@@ -536,7 +536,8 @@ export default function App() {
 
                   {/* Subtitle */}
                   <p className="text-xs sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium pt-0.5 px-2">
-                    Analyze your Reel, Short, or TikTok script, title, thumbnail, industry, and pacing before posting. Instant score breakdown out of 100 with targeted feedback.
+                    Analyze your Reel, Short, or TikTok script, title, thumbnail, industry, and pacing before posting.{' '}
+                    <span className="hidden sm:inline">Instant score breakdown out of 100 with targeted feedback.</span>
                   </p>
                 </div>
               )}
