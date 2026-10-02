@@ -152,7 +152,7 @@ export const BlogView: React.FC<BlogViewProps> = ({ onBackToApp, initialSlug }) 
               <span>{activeArticle.categoryLabel}</span>
             </div>
 
-            <h1 className="font-serif-display text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight">
+            <h1 className="font-serif-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight">
               {activeArticle.title}
             </h1>
 
@@ -269,7 +269,7 @@ export const BlogView: React.FC<BlogViewProps> = ({ onBackToApp, initialSlug }) 
               <BookOpen className="h-3.5 w-3.5 text-amber-600" />
               <span>HookZen Short-Form Knowledge Base</span>
             </div>
-            <h1 className="font-serif-display text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="font-serif-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
               Short-Form Video Viral Growth Guides
             </h1>
             <p className="text-xs sm:text-base text-slate-600 font-medium">

@@ -516,10 +516,10 @@ export default function App() {
                   </div>
 
                   {/* Serif Display Title with Sketch Accents */}
-                  <h1 className="relative inline-block font-serif-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.2] sm:leading-[1.15]">
+                  <h1 className="relative inline-block font-serif-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.2] sm:leading-[1.15]">
                     {/* Yellow Spark Rays left of Will */}
                     <span className="relative inline-block">
-                      <svg className="absolute -left-5 sm:-left-6 -top-2 sm:-top-2.5 h-5 w-5 sm:h-7 sm:w-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                      <svg className="absolute -left-5 sm:-left-6 -top-2 sm:-top-2.5 h-6 w-6 sm:h-7 sm:w-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                         <path d="M4 12h3M6 6l2 2M12 4v3" />
                       </svg>
                       Will
@@ -528,14 +528,14 @@ export default function App() {
                     <span className="relative inline-block">
                       Go Viral?
                       {/* Yellow Wavy Underline */}
-                      <svg className="absolute left-0 -bottom-2 sm:-bottom-2.5 w-full h-2.5 sm:h-3.5 text-amber-400" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                      <svg className="absolute left-0 -bottom-2 sm:-bottom-2.5 w-full h-3 sm:h-3.5 text-amber-400" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
                         <path d="M 0 6 Q 25 12, 50 6 T 100 6" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
                       </svg>
                     </span>
                   </h1>
 
                   {/* Subtitle */}
-                  <p className="text-xs sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium pt-0.5 px-2">
+                  <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium pt-0.5 px-2">
                     Analyze your Reel, Short, or TikTok script, title, thumbnail, industry, and pacing before posting.{' '}
                     <span className="hidden sm:inline">Instant score breakdown out of 100 with targeted feedback.</span>
                   </p>
