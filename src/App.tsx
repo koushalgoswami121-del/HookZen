@@ -129,10 +129,11 @@ export default function App() {
     setIsAccountSettingsOpen(false);
   };
 
-  // Check for redirect sign-in return (essential for mobile & tablet browsers fallback)
+  // Check for redirect sign-in return (essential for mobile & tablet browsers)
   useEffect(() => {
     handleAuthRedirectResult().then((redirectUser) => {
       if (redirectUser) {
+        setUser(redirectUser);
         handleRedirectToHomeAfterSignIn();
       }
     });

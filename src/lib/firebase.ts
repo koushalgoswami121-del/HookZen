@@ -33,12 +33,24 @@ import {
 import firebaseConfigData from '../../firebase-applet-config.json';
 import { ViralScoreResult } from '../types';
 
-// Always use Firebase's default authDomain (firebaseapp.com) for Google authentication.
-// Custom domain proxies (e.g. on Vercel) break postMessage and 308-redirect OAuth requests.
-// Firebase's firebaseapp.com domain works universally across mobile, tablet, and desktop.
+// Determine the appropriate authDomain for Firebase Auth:
+// - On production (hookzen.me / www.hookzen.me): use 'www.hookzen.me' so all auth helper requests
+//   and redirects remain on the exact same first-party domain, completely avoiding third-party
+//   cookie blocking (WebKit ITP) on mobile browsers and matching Vercel's proxy rewrite.
+// - On localhost / other environments: use Firebase's default hosting domain.
+export const getAuthDomain = (): string => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    if (host.includes('hookzen.me')) {
+      return 'www.hookzen.me';
+    }
+  }
+  return `${firebaseConfigData.projectId}.firebaseapp.com`;
+};
+
 const firebaseConfig = {
   apiKey: firebaseConfigData.apiKey,
-  authDomain: `${firebaseConfigData.projectId}.firebaseapp.com`,
+  authDomain: getAuthDomain(),
   projectId: firebaseConfigData.projectId,
   storageBucket: firebaseConfigData.storageBucket,
   messagingSenderId: firebaseConfigData.messagingSenderId,
@@ -254,8 +266,21 @@ export const syncUserProfileToFirestore = async (user: User): Promise<void> => {
   }
 };
 
-// Google Sign In Helper (reliable cross-platform popup with redirect fallback if popup is blocked)
+// Google Sign In Helper
+// - Mobile & Tablet: Uses signInWithRedirect so mobile Safari and Chrome don't freeze background tabs or block popups.
+//   Because authDomain is www.hookzen.me, this is a first-party redirect that never suffers from ITP or third-party cookie loss.
+// - Desktop: Uses signInWithPopup for a fast, seamless in-page popup experience (with fallback to redirect if popup is blocked).
 export const loginWithGoogle = async (): Promise<User | null> => {
+  if (isMobileOrTablet()) {
+    try {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    } catch (redirectErr) {
+      console.error('Mobile redirect sign-in error:', redirectErr);
+      throw redirectErr;
+    }
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
