@@ -3,6 +3,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   setPersistence,
@@ -228,44 +230,93 @@ export const saveIpUsageToFirestore = async (
   }
 };
 
-// Google Sign In Helper
+// Helper to check if client is on a mobile or tablet device
+export const isMobileOrTablet = (): boolean => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  return (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet|Mobile/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && window.innerWidth < 1024)
+  );
+};
+
+// Helper to sync user profile in Firestore
+export const syncUserProfileToFirestore = async (user: User): Promise<void> => {
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(
+      userRef,
+      {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (fsErr) {
+    console.warn('Non-blocking user profile firestore sync warning:', fsErr);
+  }
+};
+
+// Google Sign In Helper (supports Desktop popups, mobile/tablet redirects, and popup-blocked fallback)
 export const loginWithGoogle = async (): Promise<User | null> => {
+  // Mobile & tablet browsers block popups or have cross-origin ITP issues; use redirect
+  if (isMobileOrTablet()) {
+    try {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    } catch (redirectErr) {
+      console.warn('Mobile redirect sign-in warning:', redirectErr);
+    }
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
-      const user = result.user;
-      (async () => {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(
-            userRef,
-            {
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              updatedAt: new Date().toISOString(),
-            },
-            { merge: true }
-          );
-        } catch (fsErr) {
-          console.warn('Non-blocking user profile firestore sync warning:', fsErr);
-        }
-      })();
+      syncUserProfileToFirestore(result.user);
+      return result.user;
     }
-    return result.user;
+    return null;
   } catch (error: any) {
     if (
-      error?.code === 'auth/popup-closed-by-user' ||
-      error?.code === 'auth/cancelled-popup-request' ||
-      error?.code === 'auth/popup-blocked'
+      error?.code === 'auth/popup-blocked' ||
+      error?.code === 'auth/cancelled-popup-request'
     ) {
-      console.log('Google Sign-In popup closed or cancelled by user.');
+      console.log('Popup blocked or cancelled, falling back to redirect...');
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return null;
+      } catch (redirectError) {
+        console.error('Redirect sign-in failed:', redirectError);
+      }
+    }
+    if (error?.code === 'auth/popup-closed-by-user') {
+      console.log('Google Sign-In popup closed by user.');
       return null;
     }
     console.error('Error signing in with Google:', error);
     throw error;
   }
+};
+
+// Check for redirect result on page mount (handles returns from mobile Google redirect)
+export const handleAuthRedirectResult = async (): Promise<User | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      syncUserProfileToFirestore(result.user);
+      return result.user;
+    }
+  } catch (err: any) {
+    if (
+      err?.code !== 'auth/credential-already-in-use' &&
+      err?.code !== 'auth/null-user'
+    ) {
+      console.warn('Redirect auth result note:', err);
+    }
+  }
+  return null;
 };
 
 // Email Sign-Up Helper

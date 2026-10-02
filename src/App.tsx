@@ -31,6 +31,7 @@ import {
 import {
   subscribeToAuth,
   loginWithGoogle,
+  handleAuthRedirectResult,
   logout,
   saveUserHistoryItemToFirestore,
   fetchUserHistoryFromFirestore,
@@ -83,6 +84,22 @@ export default function App() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const feedbackResolveRef = useRef<((submitted: boolean) => void) | null>(null);
 
+  // Auth tracking refs
+  const prevUserRef = useRef<User | null>(null);
+  const isInitialAuthRef = useRef(true);
+
+  // Central redirect to home page upon sign-in (closing modals and resetting path to '/')
+  const handleRedirectToHomeAfterSignIn = () => {
+    setIsAuthModalOpen(false);
+    setIsPricingOpen(false);
+    setCurrentResult(null);
+    setCurrentView('calculator');
+    if (window.location.pathname !== '/') {
+      window.history.pushState({}, '', '/');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleOpenPricing = (reason: 'limit_reached' | 'pro_feature_locked' | 'general' = 'general') => {
     setPricingReason(reason);
     setIsPricingOpen(true);
@@ -110,6 +127,15 @@ export default function App() {
     setIsAccountSettingsOpen(false);
   };
 
+  // Check for redirect sign-in return (essential for mobile & tablet browsers)
+  useEffect(() => {
+    handleAuthRedirectResult().then((redirectUser) => {
+      if (redirectUser) {
+        handleRedirectToHomeAfterSignIn();
+      }
+    });
+  }, []);
+
   // Initial IP credit sync on boot
   useEffect(() => {
     checkAndSyncIpCredits().then((synced) => {
@@ -120,8 +146,16 @@ export default function App() {
   // Listen to Firebase Auth state & sync Firestore history and freemium profile per user account
   useEffect(() => {
     const unsubscribe = subscribeToAuth(async (currentUser) => {
+      const hadNoUser = prevUserRef.current === null;
+      prevUserRef.current = currentUser;
       setUser(currentUser);
+
       if (currentUser) {
+        // Automatically route to home page if user just signed in
+        if (hadNoUser && !isInitialAuthRef.current) {
+          handleRedirectToHomeAfterSignIn();
+        }
+        isInitialAuthRef.current = false;
         try {
           // 1. Sync User Freemium Profile from Firestore & IP usage (prevents incognito & account switching credit exploits)
           const cloudProfile = await fetchUserProfileFromFirestore(currentUser.uid);
@@ -267,7 +301,10 @@ export default function App() {
     if (isSigningIn) return;
     try {
       setIsSigningIn(true);
-      await loginWithGoogle();
+      const signedInUser = await loginWithGoogle();
+      if (signedInUser) {
+        handleRedirectToHomeAfterSignIn();
+      }
     } catch (err: any) {
       if (
         err?.code !== 'auth/popup-closed-by-user' &&
@@ -683,6 +720,7 @@ export default function App() {
           setIsAuthModalOpen(false);
           await handleSignIn();
         }}
+        onSuccess={handleRedirectToHomeAfterSignIn}
         isSigningIn={isSigningIn}
         mode={authModalMode}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}

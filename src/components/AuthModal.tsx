@@ -6,6 +6,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSignIn: () => void;
+  onSuccess?: () => void;
   isSigningIn: boolean;
   mode?: 'signin' | 'signup';
   onOpenPrivacy?: () => void;
@@ -15,6 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   onSignIn, // This is Google sign-in passed from App
+  onSuccess,
   isSigningIn,
   mode: initialMode = 'signin',
   onOpenPrivacy,
@@ -64,7 +66,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       } else {
         await signInWithEmail(email, password);
       }
-      onClose(); // Close modal on success; App.tsx auth observer handles the rest
+      onClose();
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
       console.error(error);
       if (error.code === 'auth/email-already-in-use') {

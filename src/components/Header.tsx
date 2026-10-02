@@ -139,15 +139,25 @@ export const Header: React.FC<HeaderProps> = ({
                     {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="max-w-[100px] truncate font-semibold">
-                  {user.displayName ? user.displayName.split(' ')[0] : 'Account'}
+                <span className="max-w-[70px] sm:max-w-[110px] truncate font-semibold">
+                  {user.displayName
+                    ? user.displayName.split(' ')[0]
+                    : user.email
+                    ? user.email.split('@')[0]
+                    : 'Account'}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
               </button>
 
               {/* User Dropdown Menu */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 space-y-1">
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 space-y-1">
                   <div className="flex items-center gap-2.5 pb-2.5 mb-2 border-b border-slate-100">
                     {user.photoURL ? (
                       <img
@@ -254,8 +264,9 @@ export const Header: React.FC<HeaderProps> = ({
                     </button>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
+          </div>
           ) : (
             <div className="flex items-center gap-2">
               {/* Single combined Account button */}
