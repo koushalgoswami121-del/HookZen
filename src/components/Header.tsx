@@ -75,28 +75,28 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand Logo */}
         <button
           onClick={onGoHome}
-          className="flex items-center gap-3 text-left focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-2xl p-1 transition-all cursor-pointer"
-          aria-label="HookZen - Short-Form Video Viral Analyzer Home"
+          className="flex items-center gap-2 sm:gap-3 text-left focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-2xl p-1 transition-all cursor-pointer"
+          aria-label="HookZen Home"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f8ebd0] overflow-hidden shadow-md border border-[#eedab2]">
+          <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-[#f8ebd0] overflow-hidden shadow-md border border-[#eedab2] shrink-0">
             <img src="/logo.png" alt="HookZen Logo" className="h-full w-full object-cover" />
           </div>
           <div>
-            <h1 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl leading-tight">
+            <h1 className="text-base font-extrabold tracking-tight text-slate-900 sm:text-xl leading-tight">
               HookZen
             </h1>
-            <p className="text-xs text-slate-500 font-medium tracking-tight">
+            <p className="text-xs text-slate-500 font-medium tracking-tight hidden sm:block">
               Short-Form Video Viral Analyzer
             </p>
           </div>
         </button>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Credits Display Badge */}
           <button
             onClick={onOpenPricing}
-            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all shadow-2xs cursor-pointer ${freemiumState.isPro
+            className={`flex items-center gap-1 sm:gap-1.5 rounded-full border px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs font-bold transition-all shadow-2xs cursor-pointer ${freemiumState.isPro
               ? 'bg-amber-100/90 border-amber-300 text-amber-950 hover:bg-amber-200/90'
               : 'bg-white/90 border-slate-200/90 text-slate-800 hover:bg-white hover:border-slate-300'
               }`}
@@ -106,13 +106,13 @@ export const Header: React.FC<HeaderProps> = ({
             {freemiumState.isPro ? (
               <>
                 <Crown className="h-3.5 w-3.5 text-amber-600 fill-amber-500" aria-hidden="true" />
-                <span className="font-extrabold text-amber-950">PRO Member</span>
+                <span className="font-extrabold text-amber-950">PRO<span className="hidden sm:inline"> Member</span></span>
               </>
             ) : (
               <>
                 <Zap className="h-3.5 w-3.5 text-amber-600 fill-amber-500" aria-hidden="true" />
                 <span>
-                  <strong className="text-amber-600 font-black">{remainingCredits}</strong>/{freemiumState.maxFreeDailyCredits} Credits
+                  <strong className="text-amber-600 font-black">{remainingCredits}</strong>/{freemiumState.maxFreeDailyCredits}<span className="hidden sm:inline"> Credits</span>
                 </span>
               </>
             )}
@@ -269,7 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
                   else if (onSignIn) onSignIn();
                 }}
                 disabled={isSigningIn}
-                className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-4 py-1.5 text-xs font-bold text-slate-950 shadow-2xs hover:shadow-md transition-all cursor-pointer border border-amber-400/80 disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-bold text-slate-950 shadow-2xs hover:shadow-md transition-all cursor-pointer border border-amber-400/80 disabled:opacity-60"
                 title="Create or access your HookZen account"
                 aria-label="Create or access your HookZen account"
               >

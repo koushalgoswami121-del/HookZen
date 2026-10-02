@@ -137,7 +137,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   };
 
   const contentMarkup = (
-    <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 text-slate-900 select-none">
+    <div className="relative w-full max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-5 text-slate-900 select-none">
       {/* Standalone Back Link OR Modal Close Button */}
       {isStandalonePage ? (
         <div className="mb-2 flex items-center justify-between">
@@ -189,45 +189,45 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         </p>
 
         {/* Segmented Billing Control */}
-        <div className="mt-2.5 sm:mt-3 flex justify-center">
-          <div className="inline-flex items-center p-1 rounded-full bg-white/95 border border-slate-200 shadow-2xs backdrop-blur-sm">
+        <div className="mt-2.5 sm:mt-3 flex justify-center w-full px-1">
+          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-full bg-white/95 border border-slate-200 shadow-2xs backdrop-blur-sm max-w-full">
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
                 billingCycle === 'monthly'
                   ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
-              <span className="text-xs">Monthly</span>
-              <span className="text-[11px] text-slate-500">$9.99/mo</span>
+              <span className="text-[11px] sm:text-xs">Monthly</span>
+              <span className="text-[10px] sm:text-[11px] text-slate-500">$9.99<span className="hidden sm:inline">/mo</span></span>
             </button>
 
             <button
               onClick={() => setBillingCycle('annual')}
-              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
                 billingCycle === 'annual'
                   ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
-              <span className="text-xs">Annual</span>
-              <span className="text-[11px] text-slate-500">$79/yr</span>
-              <span className="rounded-full bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.2 ml-0.5">
+              <span className="text-[11px] sm:text-xs">Annual</span>
+              <span className="text-[10px] sm:text-[11px] text-slate-500">$79<span className="hidden sm:inline">/yr</span></span>
+              <span className="rounded-full bg-amber-100 text-amber-800 text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 ml-0.5">
                 Save 34%
               </span>
             </button>
 
             <button
               onClick={() => setBillingCycle('lifetime')}
-              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
                 billingCycle === 'lifetime'
                   ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
-              <span className="text-xs">Lifetime</span>
-              <span className="text-[11px] text-slate-500">$149 one-time</span>
+              <span className="text-[11px] sm:text-xs">Lifetime</span>
+              <span className="text-[10px] sm:text-[11px] text-slate-500">$149<span className="hidden sm:inline"> one-time</span></span>
             </button>
           </div>
         </div>

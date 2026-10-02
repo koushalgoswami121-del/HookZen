@@ -144,7 +144,7 @@ export const BlogView: React.FC<BlogViewProps> = ({ onBackToApp, initialSlug }) 
 
       {/* ARTICLE DETAIL VIEW */}
       {activeArticle ? (
-        <article className="space-y-8 bg-white/90 rounded-3xl p-6 sm:p-10 border border-slate-200/90 shadow-sm backdrop-blur-xs">
+        <article className="space-y-6 sm:space-y-8 bg-white/90 rounded-2xl sm:rounded-3xl p-4 sm:p-10 border border-slate-200/90 shadow-sm backdrop-blur-xs">
           {/* Article Header */}
           <header className="space-y-4 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wide">
@@ -152,7 +152,7 @@ export const BlogView: React.FC<BlogViewProps> = ({ onBackToApp, initialSlug }) 
               <span>{activeArticle.categoryLabel}</span>
             </div>
 
-            <h1 className="font-serif-display text-3xl sm:text-5xl font-extrabold text-slate-900 leading-tight">
+            <h1 className="font-serif-display text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight">
               {activeArticle.title}
             </h1>
 
@@ -269,16 +269,16 @@ export const BlogView: React.FC<BlogViewProps> = ({ onBackToApp, initialSlug }) 
               <BookOpen className="h-3.5 w-3.5 text-amber-600" />
               <span>HookZen Short-Form Knowledge Base</span>
             </div>
-            <h1 className="font-serif-display text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="font-serif-display text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
               Short-Form Video Viral Growth Guides
             </h1>
-            <p className="text-sm sm:text-base text-slate-600 font-medium">
+            <p className="text-xs sm:text-base text-slate-600 font-medium">
               Data-backed research, algorithmic breakdowns, and step-by-step hook playbooks for creators on TikTok, YouTube Shorts, and Instagram Reels.
             </p>
           </div>
 
           {/* Controls Bar: Search & Categories */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 p-4 rounded-2xl border border-slate-200/90 shadow-2xs backdrop-blur-xs">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 bg-white/80 p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs backdrop-blur-xs">
             {/* Category Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
               {BLOG_CATEGORIES.map((cat) => (

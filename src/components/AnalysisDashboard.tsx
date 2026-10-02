@@ -450,15 +450,15 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       </div>
 
       {/* 2. TOP SCORE BANNER CARD & MATHEMATICAL TRANSPARENCY */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/90 bg-white/70 p-4 sm:p-8 shadow-xl backdrop-blur-md space-y-4 sm:space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
           {/* Left Column: Pre-Publish Score Intro */}
-          <div className="md:col-span-4 space-y-2.5">
+          <div className="md:col-span-4 space-y-2 sm:space-y-2.5">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600 border border-amber-200">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600 border border-amber-200 shrink-0">
                 <Zap className="h-4 w-4 fill-amber-500 text-amber-500" />
               </div>
-              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
                 Content Quality Score
               </h2>
             </div>
@@ -468,9 +468,9 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           </div>
 
           {/* Center Column: Semi-Circular Arc Gauge */}
-          <div className="md:col-span-4 flex flex-col items-center justify-center py-2 border-y md:border-y-0 md:border-x border-slate-200/60 px-4">
-            <div className="relative w-52 h-28 flex items-end justify-center">
-              <svg className="w-52 h-28 overflow-visible" viewBox="0 0 100 55">
+          <div className="md:col-span-4 flex flex-col items-center justify-center py-2 border-y md:border-y-0 md:border-x border-slate-200/60 px-2 sm:px-4">
+            <div className="relative w-48 sm:w-52 h-26 sm:h-28 flex items-end justify-center">
+              <svg className="w-48 sm:w-52 h-26 sm:h-28 overflow-visible" viewBox="0 0 100 55">
                 <defs>
                   <linearGradient id="gaugeGradient" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#d97706" />
@@ -509,13 +509,13 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
 
             {/* Bottom Virality Potential & Grade Pills */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
-              <div className={`rounded-full border px-3 py-0.5 text-xs font-black uppercase tracking-wider ${potentialInfo.badgeBg} shadow-2xs`}>
+              <div className={`rounded-full border px-2.5 sm:px-3 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider ${potentialInfo.badgeBg} shadow-2xs`}>
                 {v2.tier || potentialInfo.label}
               </div>
-              <div className="rounded-full border px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-2xs bg-slate-100 text-slate-700 border-slate-300">
+              <div className="rounded-full border px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-2xs bg-slate-100 text-slate-700 border-slate-300">
                 CONFIDENCE: {v2.confidence || 'MEDIUM'}
               </div>
-              <div className={`rounded-full border px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-2xs ${v2.letterGrade === 'A+'
+              <div className={`rounded-full border px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-2xs ${v2.letterGrade === 'A+'
                 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-400'
                 : v2.letterGrade === 'A'
                   ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
@@ -527,7 +527,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 }`}>
                 GRADE: {v2.letterGrade}
               </div>
-              <div className="rounded-full border px-2 py-0.5 text-[11px] font-bold text-slate-600 bg-white border-slate-200">
+              <div className="rounded-full border px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-slate-600 bg-white border-slate-200">
                 Top {100 - (v2.percentileRank || 50)}% Benchmark
               </div>
             </div>
@@ -565,9 +565,9 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
 
 
       {/* 3. PREDICTED AUDIENCE RETENTION GRAPH */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/90 bg-white/70 p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/90 bg-white/70 p-4 sm:p-8 shadow-xl backdrop-blur-md space-y-4 sm:space-y-6">
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b border-slate-200/60 pb-3">
           <div>
             <div className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-amber-600" />
@@ -581,16 +581,16 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full w-fit">
             <div className="h-2.5 w-6 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600" />
             <span>Predicted Retention %</span>
           </div>
         </div>
 
         {/* Recharts Area Chart Container */}
-        <div className="relative h-72 w-full pt-2">
+        <div className="relative h-60 sm:h-72 w-full pt-1 sm:pt-2">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={retentionData} margin={{ top: 15, right: 20, left: 10, bottom: 20 }}>
+            <AreaChart data={retentionData} margin={{ top: 15, right: 10, left: -10, bottom: 20 }}>
               <defs>
                 <linearGradient id="retentionGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8} />
@@ -705,7 +705,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         <div className="flex items-center justify-center pt-3 border-t border-slate-200/60 no-print">
           <button
             onClick={handleToggleDeeperAnalysis}
-            className="flex items-center gap-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-6 py-3 text-xs sm:text-sm font-extrabold text-white shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-[0.98]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 sm:gap-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-extrabold text-white shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-[0.98]"
           >
             {showDeeperAnalysis ? (
               <>
@@ -1133,12 +1133,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       }
 
       {/* 6. BOTTOM ACTION BUTTONS */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4 no-print">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-3.5 pt-4 no-print w-full sm:w-auto">
         {/* Single Button: Download Report */}
         <button
           onClick={() => handleDownloadPdf('client_detail')}
           disabled={Boolean(isGeneratingPdf)}
-          className="flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-indigo-700 disabled:opacity-60 px-7 py-3.5 text-sm font-extrabold text-white shadow-lg hover:brightness-105 transition-all cursor-pointer active:scale-[0.98]"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 sm:gap-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-indigo-700 disabled:opacity-60 px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-extrabold text-white shadow-lg hover:brightness-105 transition-all cursor-pointer active:scale-[0.98]"
         >
           <Download className={`h-4.5 w-4.5 text-amber-100 ${isGeneratingPdf ? 'animate-bounce' : ''}`} />
           <span>{isGeneratingPdf ? 'Downloading Report...' : 'Download Report'}</span>
@@ -1148,7 +1148,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         {onReset && (
           <button
             onClick={onReset}
-            className="flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white/90 px-5 py-3.5 text-xs font-bold text-slate-800 hover:bg-white hover:border-slate-300 shadow-2xs transition-all cursor-pointer active:scale-[0.98]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white/90 px-5 py-3 sm:py-3.5 text-xs font-bold text-slate-800 hover:bg-white hover:border-slate-300 shadow-2xs transition-all cursor-pointer active:scale-[0.98]"
           >
             <RotateCcw className="h-4 w-4 text-slate-600" />
             <span>Start New Analysis</span>

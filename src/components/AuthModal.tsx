@@ -83,11 +83,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md p-4 sm:p-6 flex min-h-full items-center justify-center animate-fade-in"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-center justify-center animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl border border-amber-200/80 p-6 sm:p-7 shadow-2xl space-y-6 my-auto text-slate-900 text-center overflow-hidden"
+        className="relative w-full max-w-md rounded-2xl sm:rounded-3xl bg-white/95 backdrop-blur-xl border border-amber-200/80 p-5 sm:p-7 shadow-2xl space-y-5 sm:space-y-6 my-auto text-slate-900 text-center overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Background Decorative Glows */}

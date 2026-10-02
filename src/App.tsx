@@ -461,7 +461,7 @@ export default function App() {
         />
 
         {/* Main Container */}
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
+        <main className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-10">
           {currentView === 'payment_success' ? (
             <PaymentSuccessView
               user={user}
@@ -501,25 +501,25 @@ export default function App() {
             <>
               {/* Hero Banner Section */}
               {!currentResult && (
-                <div className="text-center max-w-4xl mx-auto space-y-6 pt-4 pb-2">
+                <div className="text-center max-w-4xl mx-auto space-y-4 sm:space-y-6 pt-1 sm:pt-4 pb-2">
                   {/* Top Tag & Viral Live Growth Badge */}
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-4 py-1.5 text-xs sm:text-sm font-extrabold text-slate-800 border border-sky-200/80 shadow-2xs">
-                      <Smartphone className="h-4 w-4 text-sky-600" />
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                    <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-sky-50 px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm font-extrabold text-slate-800 border border-sky-200/80 shadow-2xs">
+                      <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-600" />
                       <span>Short-Form Video Intelligence</span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200/80 shadow-2xs">
-                      <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+                    <div className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-bold text-emerald-800 border border-emerald-200/80 shadow-2xs">
+                      <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-600" />
                       <span>Shorts &amp; Reels FYP Algorithm Engine</span>
                     </div>
                   </div>
 
                   {/* Serif Display Title with Sketch Accents */}
-                  <h1 className="relative inline-block font-serif-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl leading-[1.15]">
+                  <h1 className="relative inline-block font-serif-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.2] sm:leading-[1.15]">
                     {/* Yellow Spark Rays left of Will */}
                     <span className="relative inline-block">
-                      <svg className="absolute -left-6 -top-2.5 h-7 w-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                      <svg className="absolute -left-5 sm:-left-6 -top-2 sm:-top-2.5 h-5 w-5 sm:h-7 sm:w-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                         <path d="M4 12h3M6 6l2 2M12 4v3" />
                       </svg>
                       Will
@@ -528,14 +528,14 @@ export default function App() {
                     <span className="relative inline-block">
                       Go Viral?
                       {/* Yellow Wavy Underline */}
-                      <svg className="absolute left-0 -bottom-2.5 w-full h-3.5 text-amber-400" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                      <svg className="absolute left-0 -bottom-2 sm:-bottom-2.5 w-full h-2.5 sm:h-3.5 text-amber-400" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
                         <path d="M 0 6 Q 25 12, 50 6 T 100 6" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
                       </svg>
                     </span>
                   </h1>
 
                   {/* Subtitle */}
-                  <p className="text-base text-slate-600 sm:text-lg leading-relaxed max-w-3xl mx-auto font-medium pt-1">
+                  <p className="text-xs sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium pt-0.5 px-2">
                     Analyze your Reel, Short, or TikTok script, title, thumbnail, industry, and pacing before posting. Instant score breakdown out of 100 with targeted feedback.
                   </p>
                 </div>
@@ -543,17 +543,17 @@ export default function App() {
 
               {/* Action bar when result is active */}
               {currentResult && (
-                <div className="flex items-center justify-between border-b border-slate-200/80 pb-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
                   <button
                     onClick={handleNewAnalysis}
-                    className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400"
                     aria-label="Analyze another video"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     <span>Analyze Another Video</span>
                   </button>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                  <div className="flex items-center justify-center sm:justify-end gap-2 text-xs text-slate-500 font-medium">
                     <span>Analyzed at</span>
                     <span className="text-slate-800 font-bold">{formatTo12HrTime(currentResult.timestamp)}</span>
                   </div>
