@@ -463,9 +463,6 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
                 Content Quality Score
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-              Deterministic 6-component content rating evaluated across hook, pacing, structure, visual, engagement, and discoverability.
-            </p>
           </div>
 
           {/* Center Column: Semi-Circular Arc Gauge */}
