@@ -437,7 +437,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           </span>
         </div>
         <h1 className="font-serif-display text-4xl font-black text-slate-900 sm:text-4xl md:text-5xl tracking-tight leading-tight">
-          Performance Coaching Report
+          Performance Report
         </h1>
         <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-xl mx-auto flex items-center justify-center gap-2 flex-wrap">
           <span>Mathematically transparent pre-publish script analysis and retention diagnosis.</span>

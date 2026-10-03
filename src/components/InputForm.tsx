@@ -220,7 +220,7 @@ export const InputForm: React.FC<InputFormProps> = ({
 
         {/* Text */}
         <h2 className="text-2xl font-black tracking-tight text-slate-800 mb-6">
-          Analyzing your script...
+          Analysing your video...
         </h2>
 
         {/* Capsule Progress Bar */}

@@ -60,7 +60,7 @@ export const AnalyzingAnimation: React.FC = () => {
 
                 {/* Text */}
                 <h2 className="text-2xl font-black tracking-tight text-slate-800 mb-6 z-10">
-                    Analyzing your script...
+                    Analysing your video...
                 </h2>
 
                 {/* Capsule Progress Bar */}

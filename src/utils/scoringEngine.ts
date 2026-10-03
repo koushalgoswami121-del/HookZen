@@ -296,7 +296,7 @@ export async function calculateViralScore(
           id: 'meaningless-content',
           category: 'hook',
           title: 'Input Contains Fewer Than 5 Words or Invalid / Nonsense Text',
-          description: 'Your video title and transcript combined contain fewer than 5 words or consist of unrecognized / gibberish text. Please enter a complete video title and spoken script for an accurate pre-publish virality coaching report.',
+          description: 'Your video title and transcript combined contain fewer than 5 words or consist of unrecognized / gibberish text. Please enter a complete video title and spoken script for an accurate pre-publish virality performance report.',
           exampleFix: `Enter a clear title like "3 Secrets to Growth in ${industry}" and a spoken script with at least 15 words.`,
           priority: 'critical',
           impactPts: 100,
