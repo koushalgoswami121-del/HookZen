@@ -12,7 +12,8 @@ import {
   CreditCard,
   Headphones,
   Sprout,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { FreemiumState, toggleProStatus } from '../utils/freemiumManager';
@@ -43,6 +44,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual' | 'lifetime'>('monthly');
   const [isActivating, setIsActivating] = useState(false);
+  const [redirectingPlan, setRedirectingPlan] = useState<'monthly' | 'annual' | 'lifetime' | null>(null);
 
   // Close modal on Escape key if in modal mode
   useEffect(() => {
@@ -68,13 +70,8 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const POLAR_YEARLY_CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_aGmfxo8xDnpWHiMuA0qpF4Q5P2O1CaBOBgIl44bAt7X';
   const POLAR_LIFETIME_CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_rOTZcvExdcMLC5hAfscDfgTtdMBcFHxtKiQVk2fqZVZ';
 
-  const handleTogglePro = async (enable: boolean, selectedPlan?: 'free' | 'monthly' | 'annual' | 'lifetime') => {
+  const handleTogglePro = (enable: boolean, selectedPlan?: 'free' | 'monthly' | 'annual' | 'lifetime') => {
     if (enable) {
-      if (!user) {
-        if (onSignIn) onSignIn();
-        return;
-      }
-
       const targetPlan: 'monthly' | 'annual' | 'lifetime' =
         selectedPlan && selectedPlan !== 'free'
           ? selectedPlan
@@ -84,20 +81,23 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           ? 'annual'
           : 'monthly';
 
-      // Save pending plan to local storage & cloud profile so returning from checkout upgrades exact plan
+      setRedirectingPlan(targetPlan);
+
+      // Save pending plan to local storage synchronously so return from checkout can upgrade
       try {
         localStorage.setItem('pending_plan_type', targetPlan);
       } catch (e) {
         console.warn('Could not set pending_plan_type in localStorage', e);
       }
 
-      try {
-        await saveUserProfileToFirestore(user.uid, {
+      // Non-blocking fire-and-forget sync to Firestore if user is signed in
+      if (user) {
+        saveUserProfileToFirestore(user.uid, {
           pendingPlanType: targetPlan,
           planType: targetPlan,
+        }).catch((cloudErr) => {
+          console.warn('Cloud sync pending plan note:', cloudErr);
         });
-      } catch (cloudErr) {
-        console.warn('Cloud sync pending plan note:', cloudErr);
       }
 
       let checkoutUrl = POLAR_MONTHLY_CHECKOUT_URL;
@@ -107,8 +107,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         checkoutUrl = POLAR_YEARLY_CHECKOUT_URL;
       }
 
-      // Direct redirect to official Polar checkout page
-      window.location.href = checkoutUrl;
+      // Prefill customer email if user is signed in
+      if (user?.email) {
+        const separator = checkoutUrl.includes('?') ? '&' : '?';
+        checkoutUrl += `${separator}customer_email=${encodeURIComponent(user.email)}`;
+      }
+
+      // Instant synchronous redirect within user-gesture callstack
+      // Eliminates desktop delay and prevents mobile browser from dropping redirect
+      try {
+        window.location.assign(checkoutUrl);
+      } catch {
+        window.location.href = checkoutUrl;
+      }
       return;
     }
 
@@ -122,10 +133,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       onUpdateState(updated);
 
       if (user) {
-        await saveUserProfileToFirestore(user.uid, {
+        saveUserProfileToFirestore(user.uid, {
           isPro: false,
           planType: 'free',
-        });
+        }).catch(console.warn);
       }
 
       setTimeout(() => {
@@ -137,7 +148,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   };
 
   const contentMarkup = (
-    <div className="relative w-full max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-5 text-slate-900 select-none">
+    <div className="relative w-full max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-5 text-slate-900">
       {/* Standalone Back Link OR Modal Close Button */}
       {isStandalonePage ? (
         <div className="mb-2 flex items-center justify-between">
@@ -193,7 +204,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           <div className="inline-flex items-center p-0.5 sm:p-1 rounded-full bg-white/95 border border-slate-200 shadow-2xs backdrop-blur-sm max-w-full">
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 touch-manipulation active:scale-95 ${
                 billingCycle === 'monthly'
                   ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
@@ -205,7 +216,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
             <button
               onClick={() => setBillingCycle('annual')}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 touch-manipulation active:scale-95 ${
                 billingCycle === 'annual'
                   ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
@@ -220,7 +231,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
             <button
               onClick={() => setBillingCycle('lifetime')}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-full transition-all cursor-pointer shrink-0 touch-manipulation active:scale-95 ${
                 billingCycle === 'lifetime'
                   ? 'bg-amber-50 text-slate-900 border border-amber-300 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 font-medium'
@@ -352,21 +363,30 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
           <button
             onClick={() => handleTogglePro(true, billingCycle === 'annual' ? 'annual' : 'monthly')}
-            disabled={isActivating || (freemiumState.isPro && freemiumState.planType !== 'lifetime')}
-            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer ${
+            disabled={Boolean(redirectingPlan) || isActivating || (freemiumState.isPro && freemiumState.planType !== 'lifetime')}
+            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 touch-manipulation active:scale-[0.98] ${
               freemiumState.isPro && freemiumState.planType !== 'lifetime'
                 ? 'bg-amber-400 text-slate-950 cursor-default shadow-xs'
-                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80 shadow-amber-500/20'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80 shadow-amber-500/20 cursor-pointer'
             }`}
           >
-            <Crown className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
-            <span>
-              {freemiumState.isPro && freemiumState.planType !== 'lifetime'
-                ? 'Active Pro Subscription'
-                : billingCycle === 'annual'
-                ? 'Get Pro Annual →'
-                : 'Get Pro Monthly →'}
-            </span>
+            {redirectingPlan === (billingCycle === 'annual' ? 'annual' : 'monthly') ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-950" />
+                <span>Opening Checkout...</span>
+              </>
+            ) : (
+              <>
+                <Crown className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
+                <span>
+                  {freemiumState.isPro && freemiumState.planType !== 'lifetime'
+                    ? 'Active Pro Subscription'
+                    : billingCycle === 'annual'
+                    ? 'Get Pro Annual →'
+                    : 'Get Pro Monthly →'}
+                </span>
+              </>
+            )}
           </button>
         </div>
 
@@ -417,18 +437,25 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
           <button
             onClick={() => handleTogglePro(true, 'lifetime')}
-            disabled={isActivating || (freemiumState.isPro && freemiumState.planType === 'lifetime')}
-            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all border flex items-center justify-center gap-1.5 cursor-pointer ${
+            disabled={Boolean(redirectingPlan) || isActivating || (freemiumState.isPro && freemiumState.planType === 'lifetime')}
+            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all border flex items-center justify-center gap-1.5 touch-manipulation active:scale-[0.98] ${
               freemiumState.isPro && freemiumState.planType === 'lifetime'
                 ? 'bg-emerald-600 text-white border-emerald-600 cursor-default'
-                : 'border-amber-400/80 bg-amber-50/50 hover:bg-amber-100/70 text-amber-950 shadow-2xs'
+                : 'border-amber-400/80 bg-amber-50/50 hover:bg-amber-100/70 text-amber-950 shadow-2xs cursor-pointer'
             }`}
           >
-            <span>
-              {freemiumState.isPro && freemiumState.planType === 'lifetime'
-                ? 'Active Lifetime Plan'
-                : 'Get Lifetime Pass →'}
-            </span>
+            {redirectingPlan === 'lifetime' ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-900" />
+                <span>Opening Checkout...</span>
+              </>
+            ) : (
+              <span>
+                {freemiumState.isPro && freemiumState.planType === 'lifetime'
+                  ? 'Active Lifetime Plan'
+                  : 'Get Lifetime Pass →'}
+              </span>
+            )}
           </button>
         </div>
       </div>
