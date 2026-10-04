@@ -146,7 +146,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   <p className="text-[11px] text-slate-500 font-medium">
                     {freemiumState.isPro
                       ? 'Unlimited Video Audits & AI Script Optimizations'
-                      : '50 Free Credits (Refresh monthly)'}
+                      : '50 Free Credits (Refreshes every 28 days)'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -200,7 +200,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                             Cancel Subscription?
                           </p>
                           <p className="text-[11px] text-amber-900 font-medium">
-                            Your Pro unlimited credits will be cancelled and your account will revert to the 50 daily credit limit (10 credits per analysis).
+                            Your Pro unlimited credits will be cancelled and your account will revert to the 50 credit limit (refreshes every 28 days, 10 credits per analysis).
                           </p>
                         </div>
                       </div>

@@ -268,7 +268,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <li className="flex items-start gap-2">
                 <Check className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5 stroke-[3]" />
                 <span>
-                  <strong>50 Free Credits</strong> (Refreshes monthly = 5 audits)
+                  <strong>50 Free Credits</strong> (Refreshes every 28 days = 5 audits)
                 </span>
               </li>
               <li className="flex items-start gap-2">

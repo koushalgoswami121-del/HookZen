@@ -26,6 +26,8 @@ import {
   checkAndSyncIpCredits,
   toggleProStatus,
   resetFreemiumToSignedOut,
+  isCycleResetDue,
+  getTodayDateString,
   FreemiumState,
 } from './utils/freemiumManager';
 import {
@@ -171,20 +173,39 @@ export default function App() {
           // Pro status is strictly derived from the authenticated user's verified cloud profile
           const isPaid = Boolean(cloudProfile?.isPro);
 
-          const today = localState.lastResetDate;
-          const cloudUsed = (cloudProfile && cloudProfile.lastResetDate === today) ? Number(cloudProfile.dailyCreditsUsed || 0) : 0;
-          const ipUsed = (ipRecord && ipRecord.lastResetDate === today) ? Number(ipRecord.dailyCreditsUsed || 0) : 0;
-          const localUsed = Number(localState.dailyCreditsUsed || 0);
-
+          let cycleStartDate = cloudProfile?.lastResetDate || localState.lastResetDate || getTodayDateString();
           let maxCreditsUsed = 0;
+
           if (!isPaid) {
-            // For returning users with a verified cloud history today, their cloud profile is the absolute source of truth.
-            // This prevents IP usage from anonymous tabs from unfairly draining their logged-in account balance.
-            if (cloudProfile && cloudProfile.lastResetDate === today && cloudProfile.dailyCreditsUsed !== undefined) {
-              maxCreditsUsed = cloudUsed;
+            // Strict 28-day cycle check for free credits
+            if (cloudProfile?.lastResetDate && isCycleResetDue(cloudProfile.lastResetDate)) {
+              // Cycle expired (>= 28 days) -> reset cycle
+              cycleStartDate = getTodayDateString();
+              maxCreditsUsed = 0;
+            } else if (cloudProfile?.lastResetDate) {
+              // Cycle active (< 28 days) -> retain cloud cycle start date & credits used
+              cycleStartDate = cloudProfile.lastResetDate;
+              maxCreditsUsed = Number(cloudProfile.dailyCreditsUsed || 0);
+
+              // Merge any anonymous usage within an active 28-day cycle
+              if (localState.lastResetDate && !isCycleResetDue(localState.lastResetDate)) {
+                maxCreditsUsed = Math.max(maxCreditsUsed, Number(localState.dailyCreditsUsed || 0));
+              }
+              if (ipRecord && ipRecord.lastResetDate && !isCycleResetDue(ipRecord.lastResetDate)) {
+                maxCreditsUsed = Math.max(maxCreditsUsed, Number(ipRecord.dailyCreditsUsed || 0));
+              }
             } else {
-              // Brand new sign-ups are initialized with the anonymous IP/local usage to prevent endless trial abuse.
+              // Brand new sign-up without cloud history
+              const localUsed = (localState.lastResetDate && !isCycleResetDue(localState.lastResetDate))
+                ? Number(localState.dailyCreditsUsed || 0)
+                : 0;
+              const ipUsed = (ipRecord && ipRecord.lastResetDate && !isCycleResetDue(ipRecord.lastResetDate))
+                ? Number(ipRecord.dailyCreditsUsed || 0)
+                : 0;
               maxCreditsUsed = Math.max(localUsed, ipUsed);
+              cycleStartDate = (localState.lastResetDate && !isCycleResetDue(localState.lastResetDate))
+                ? localState.lastResetDate
+                : (ipRecord?.lastResetDate && !isCycleResetDue(ipRecord.lastResetDate) ? ipRecord.lastResetDate : getTodayDateString());
             }
           }
 
@@ -196,7 +217,7 @@ export default function App() {
               : 'free',
             dailyCreditsUsed: maxCreditsUsed,
             bonusCredits: cloudProfile?.bonusCredits || localState.bonusCredits || 0,
-            lastResetDate: today,
+            lastResetDate: cycleStartDate,
           };
 
           setFreemiumState(mergedState);
@@ -204,7 +225,7 @@ export default function App() {
 
           if (!isPaid) {
             // Ensure IP record in Firestore is also updated to reflect max credits used
-            await saveIpUsageToFirestore(ip, maxCreditsUsed, today);
+            await saveIpUsageToFirestore(ip, maxCreditsUsed, cycleStartDate);
           }
 
           await saveUserProfileToFirestore(currentUser.uid, {
@@ -281,7 +302,13 @@ export default function App() {
           hasChanges = true;
         }
 
-        if (cloudProfile.dailyCreditsUsed !== undefined && prev.dailyCreditsUsed !== cloudProfile.dailyCreditsUsed && cloudProfile.lastResetDate === prev.lastResetDate) {
+        if (cloudProfile.lastResetDate && cloudProfile.lastResetDate !== prev.lastResetDate) {
+          newState.lastResetDate = cloudProfile.lastResetDate;
+          if (cloudProfile.dailyCreditsUsed !== undefined) {
+            newState.dailyCreditsUsed = cloudProfile.dailyCreditsUsed;
+          }
+          hasChanges = true;
+        } else if (cloudProfile.dailyCreditsUsed !== undefined && prev.dailyCreditsUsed !== cloudProfile.dailyCreditsUsed) {
           newState.dailyCreditsUsed = cloudProfile.dailyCreditsUsed;
           hasChanges = true;
         }

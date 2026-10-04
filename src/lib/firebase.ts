@@ -32,6 +32,7 @@ import {
 } from 'firebase/firestore';
 import firebaseConfigData from '../../firebase-applet-config.json';
 import { ViralScoreResult } from '../types';
+import { isCycleResetDue } from '../utils/cycleUtils';
 
 // Determine the appropriate authDomain for Firebase Auth:
 // - On production (hookzen.me / www.hookzen.me): use 'www.hookzen.me' so all auth helper requests
@@ -217,17 +218,21 @@ export const saveIpUsageToFirestore = async (
     const ipRef = doc(db, 'ip_usage', sanitizedKey);
     const snap = await getDoc(ipRef);
     let finalCreditsUsed = creditsUsed;
+    let finalResetDate = lastResetDate;
     if (snap.exists()) {
       const data = snap.data();
-      if (data.lastResetDate === lastResetDate) {
+      const existingDate = String(data.lastResetDate || '');
+      // If the recorded usage is within an active 28-day cycle, merge highest usage and keep cycle anchor
+      if (existingDate && !isCycleResetDue(existingDate)) {
         finalCreditsUsed = Math.max(Number(data.dailyCreditsUsed || 0), creditsUsed);
+        finalResetDate = existingDate < lastResetDate ? existingDate : lastResetDate;
       }
     }
     await setDoc(
       ipRef,
       {
         dailyCreditsUsed: finalCreditsUsed,
-        lastResetDate,
+        lastResetDate: finalResetDate,
         updatedAt: new Date().toISOString(),
       },
       { merge: true }

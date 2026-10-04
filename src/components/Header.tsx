@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Zap, History, BookOpen, Crown, Sparkles, LogOut, User as UserIcon, ChevronDown, Settings } from 'lucide-react';
 import { User } from 'firebase/auth';
-import { FreemiumState } from '../utils/freemiumManager';
+import { FreemiumState, getDaysUntilNextReset } from '../utils/freemiumManager';
 
 interface HeaderProps {
   onOpenHistory: () => void;
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'bg-amber-100/90 border-amber-300 text-amber-950 hover:bg-amber-200/90'
               : 'bg-white/90 border-slate-200/90 text-slate-800 hover:bg-white hover:border-slate-300'
               }`}
-            title={isProActive ? 'Pro Subscription Active' : 'Free Credits (Refreshes Monthly) - Click for Pro'}
+            title={isProActive ? 'Pro Subscription Active' : `Free Credits (Refreshes every 28 days - ${getDaysUntilNextReset(freemiumState.lastResetDate)} days remaining) - Click for Pro`}
             aria-label="View Credits and Subscription Details"
           >
             {isProActive ? (

@@ -15,13 +15,26 @@ export interface FreemiumState {
 }
 
 const STORAGE_KEY = 'hookzen_freemium_state';
-const MAX_FREE_DAILY = 50;
-export const CREDITS_PER_ANALYSIS = 10;
+export {
+  CYCLE_DAYS,
+  MAX_FREE_CREDITS,
+  CREDITS_PER_ANALYSIS,
+  getTodayDateString,
+  parseDateToMidnight,
+  getDaysSinceReset,
+  isCycleResetDue,
+  getDaysUntilNextReset,
+} from './cycleUtils';
 
-function getTodayDateString(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
+import {
+  CYCLE_DAYS,
+  MAX_FREE_CREDITS,
+  CREDITS_PER_ANALYSIS,
+  getTodayDateString,
+  isCycleResetDue,
+} from './cycleUtils';
+
+export const MAX_FREE_DAILY = MAX_FREE_CREDITS;
 
 export function getFreemiumState(): FreemiumState {
   try {
@@ -48,11 +61,18 @@ export function getFreemiumState(): FreemiumState {
       parsed.planType = parsed.isPro ? 'lifetime' : 'free';
     }
 
-    // Check if a new day has started
-    if (parsed.lastResetDate !== today) {
+    // STRICT 28-DAY RESET RULE:
+    // Only reset credits if 28 or more full days have passed since the cycle started.
+    if (!parsed.lastResetDate) {
+      parsed.lastResetDate = today;
+      parsed.dailyCreditsUsed = 0;
+    } else if (isCycleResetDue(parsed.lastResetDate)) {
       parsed.dailyCreditsUsed = 0;
       parsed.lastResetDate = today;
     }
+    // If less than 28 days have passed, parsed.dailyCreditsUsed and parsed.lastResetDate
+    // are strictly preserved and WILL NOT reset.
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
 
     return parsed;
@@ -87,7 +107,6 @@ export async function checkAndSyncIpCredits(isUserLoggedIn = false): Promise<Fre
   try {
     const ip = await getPublicIp();
     const fp = getDeviceFingerprint();
-    const today = getTodayDateString();
 
     // Check both vectors in parallel
     const [ipRecord, fpRecord] = await Promise.all([
@@ -96,15 +115,31 @@ export async function checkAndSyncIpCredits(isUserLoggedIn = false): Promise<Fre
     ]);
 
     let highestUsed = currentState.dailyCreditsUsed;
-    if (ipRecord && ipRecord.lastResetDate === today) {
-      highestUsed = Math.max(highestUsed, ipRecord.dailyCreditsUsed);
-    }
-    if (fpRecord && fpRecord.lastResetDate === today) {
-      highestUsed = Math.max(highestUsed, fpRecord.dailyCreditsUsed);
+    let cycleStartDate = currentState.lastResetDate;
+
+    // Strict 28-day sync with IP record
+    if (ipRecord && ipRecord.lastResetDate) {
+      if (!isCycleResetDue(ipRecord.lastResetDate)) {
+        highestUsed = Math.max(highestUsed, Number(ipRecord.dailyCreditsUsed || 0));
+        if (ipRecord.lastResetDate < cycleStartDate) {
+          cycleStartDate = ipRecord.lastResetDate;
+        }
+      }
     }
 
-    if (highestUsed !== currentState.dailyCreditsUsed) {
+    // Strict 28-day sync with Device Fingerprint record
+    if (fpRecord && fpRecord.lastResetDate) {
+      if (!isCycleResetDue(fpRecord.lastResetDate)) {
+        highestUsed = Math.max(highestUsed, Number(fpRecord.dailyCreditsUsed || 0));
+        if (fpRecord.lastResetDate < cycleStartDate) {
+          cycleStartDate = fpRecord.lastResetDate;
+        }
+      }
+    }
+
+    if (highestUsed !== currentState.dailyCreditsUsed || cycleStartDate !== currentState.lastResetDate) {
       currentState.dailyCreditsUsed = highestUsed;
+      currentState.lastResetDate = cycleStartDate;
       saveFreemiumState(currentState);
     }
   } catch (err) {
@@ -179,14 +214,15 @@ export function resetDailyCredits(): FreemiumState {
 }
 
 export function resetFreemiumToSignedOut(): FreemiumState {
-  const today = getTodayDateString();
   const state = getFreemiumState();
   const resetState: FreemiumState = {
     ...state,
     isPro: false,
     planType: 'free',
     bonusCredits: 0,
-    lastResetDate: today,
+    lastResetDate: state.lastResetDate && !isCycleResetDue(state.lastResetDate)
+      ? state.lastResetDate
+      : getTodayDateString(),
   };
   saveFreemiumState(resetState);
   return resetState;
