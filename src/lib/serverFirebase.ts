@@ -142,13 +142,23 @@ export function extractUserFromPolarEvent(event: any): {
     metadata.planType === 'monthly'
   ) {
     planType = metadata.planType;
-  } else if (
-    data.product?.name?.toLowerCase().includes('annual') ||
-    data.recurring_interval === 'year'
-  ) {
-    planType = 'annual';
-  } else if (data.product?.name?.toLowerCase().includes('lifetime')) {
-    planType = 'lifetime';
+  } else {
+    const rawPayload = JSON.stringify(data).toLowerCase();
+    if (
+      rawPayload.includes('polar_cl_agmfxo8xdnpwhimua0qpf4q5p2o1cabobgil44bat7x') ||
+      data.product?.name?.toLowerCase().includes('annual') ||
+      data.product?.name?.toLowerCase().includes('yearly') ||
+      data.recurring_interval === 'year'
+    ) {
+      planType = 'annual';
+    } else if (
+      rawPayload.includes('polar_cl_rotzcvexdcmlc5hafscdfgttdmbcfhxtkiqvk2fqzvz') ||
+      data.product?.name?.toLowerCase().includes('lifetime')
+    ) {
+      planType = 'lifetime';
+    } else {
+      planType = 'monthly';
+    }
   }
 
   return { userId, email, planType };

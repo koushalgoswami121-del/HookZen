@@ -313,9 +313,12 @@ export default function App() {
           hasChanges = true;
         }
 
-        if (cloudProfile.isPro !== undefined && prev.isPro !== cloudProfile.isPro) {
-          newState.isPro = cloudProfile.isPro;
-          newState.planType = cloudProfile.planType || 'free';
+        if (
+          (cloudProfile.isPro !== undefined && prev.isPro !== cloudProfile.isPro) ||
+          (cloudProfile.planType !== undefined && prev.planType !== cloudProfile.planType)
+        ) {
+          newState.isPro = cloudProfile.isPro !== undefined ? cloudProfile.isPro : prev.isPro;
+          newState.planType = cloudProfile.planType || (newState.isPro ? 'monthly' : 'free');
           hasChanges = true;
         }
 
@@ -782,6 +785,10 @@ export default function App() {
         freemiumState={effectiveFreemiumState}
         onCancelSubscription={handleCancelSubscription}
         onDeleteAccount={handleDeleteAccount}
+        onOpenPricing={() => {
+          setIsAccountSettingsOpen(false);
+          handleOpenPricing('upgrade');
+        }}
       />
 
       {/* Footer */}

@@ -42,7 +42,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   isSigningIn = false,
   isStandalonePage = false,
 }) => {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual' | 'lifetime'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual' | 'lifetime'>(() => {
+    if (freemiumState.isPro && freemiumState.planType === 'annual') return 'annual';
+    if (freemiumState.isPro && freemiumState.planType === 'lifetime') return 'lifetime';
+    return 'monthly';
+  });
   const [isActivating, setIsActivating] = useState(false);
   const [redirectingPlan, setRedirectingPlan] = useState<'monthly' | 'annual' | 'lifetime' | null>(null);
 
@@ -90,11 +94,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         console.warn('Could not set pending_plan_type in localStorage', e);
       }
 
-      // Non-blocking fire-and-forget sync to Firestore if user is signed in
+      // Non-blocking fire-and-forget sync of pending plan to Firestore if user is signed in
+      // NOTE: Do NOT set active planType here — that only updates once payment is verified!
       if (user) {
         saveUserProfileToFirestore(user.uid, {
           pendingPlanType: targetPlan,
-          planType: targetPlan,
         }).catch((cloudErr) => {
           console.warn('Cloud sync pending plan note:', cloudErr);
         });
@@ -212,6 +216,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             >
               <span className="text-[11px] sm:text-xs">Monthly</span>
               <span className="text-[10px] sm:text-[11px] text-slate-500">$9.99<span className="hidden sm:inline">/mo</span></span>
+              {freemiumState.isPro && freemiumState.planType === 'monthly' && (
+                <span className="rounded-full bg-emerald-100 text-emerald-800 text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 ml-0.5">
+                  Current
+                </span>
+              )}
             </button>
 
             <button
@@ -227,6 +236,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <span className="rounded-full bg-amber-100 text-amber-800 text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 ml-0.5">
                 Save 34%
               </span>
+              {freemiumState.isPro && freemiumState.planType === 'annual' && (
+                <span className="rounded-full bg-emerald-100 text-emerald-800 text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 ml-0.5">
+                  Current
+                </span>
+              )}
             </button>
 
             <button
@@ -239,6 +253,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             >
               <span className="text-[11px] sm:text-xs">Lifetime</span>
               <span className="text-[10px] sm:text-[11px] text-slate-500">$149<span className="hidden sm:inline"> one-time</span></span>
+              {freemiumState.isPro && freemiumState.planType === 'lifetime' && (
+                <span className="rounded-full bg-emerald-100 text-emerald-800 text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 ml-0.5">
+                  Current
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -361,33 +380,65 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             </ul>
           </div>
 
-          <button
-            onClick={() => handleTogglePro(true, billingCycle === 'annual' ? 'annual' : 'monthly')}
-            disabled={Boolean(redirectingPlan) || isActivating || (freemiumState.isPro && freemiumState.planType !== 'lifetime')}
-            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 touch-manipulation active:scale-[0.98] ${
-              freemiumState.isPro && freemiumState.planType !== 'lifetime'
-                ? 'bg-amber-400 text-slate-950 cursor-default shadow-xs'
-                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80 shadow-amber-500/20 cursor-pointer'
-            }`}
-          >
-            {redirectingPlan === (billingCycle === 'annual' ? 'annual' : 'monthly') ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-950" />
-                <span>Opening Checkout...</span>
-              </>
-            ) : (
-              <>
-                <Crown className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
-                <span>
-                  {freemiumState.isPro && freemiumState.planType !== 'lifetime'
-                    ? 'Active Pro Subscription'
-                    : billingCycle === 'annual'
-                    ? 'Get Pro Annual →'
-                    : 'Get Pro Monthly →'}
-                </span>
-              </>
-            )}
-          </button>
+          {/* Card 2 Button */}
+          {(() => {
+            const isAnnualSelected = billingCycle === 'annual';
+            const isCurrentCardPlan =
+              freemiumState.isPro &&
+              ((!isAnnualSelected && freemiumState.planType === 'monthly') ||
+                (isAnnualSelected && freemiumState.planType === 'annual'));
+            const isLifetimeActive =
+              freemiumState.isPro && freemiumState.planType === 'lifetime';
+
+            const isCard2Disabled =
+              Boolean(redirectingPlan) ||
+              isActivating ||
+              isLifetimeActive ||
+              isCurrentCardPlan;
+
+            let card2ButtonText = 'Get Pro Monthly →';
+            if (isLifetimeActive) {
+              card2ButtonText = 'Included in Lifetime';
+            } else if (isCurrentCardPlan) {
+              card2ButtonText = isAnnualSelected
+                ? 'Current Plan (Annual)'
+                : 'Current Plan (Monthly)';
+            } else if (freemiumState.isPro) {
+              if (isAnnualSelected) {
+                card2ButtonText = 'Upgrade to Annual ($79/yr) →';
+              } else {
+                card2ButtonText = 'Switch to Monthly ($9.99/mo) →';
+              }
+            } else {
+              card2ButtonText = isAnnualSelected
+                ? 'Get Pro Annual →'
+                : 'Get Pro Monthly →';
+            }
+
+            return (
+              <button
+                onClick={() => handleTogglePro(true, isAnnualSelected ? 'annual' : 'monthly')}
+                disabled={isCard2Disabled}
+                className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5 touch-manipulation active:scale-[0.98] ${
+                  isCurrentCardPlan || isLifetimeActive
+                    ? 'bg-amber-100/90 border border-amber-300 text-amber-950 cursor-default shadow-xs'
+                    : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80 shadow-amber-500/20 cursor-pointer'
+                }`}
+              >
+                {redirectingPlan === (isAnnualSelected ? 'annual' : 'monthly') ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-950" />
+                    <span>Opening Checkout...</span>
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
+                    <span>{card2ButtonText}</span>
+                  </>
+                )}
+              </button>
+            );
+          })()}
         </div>
 
         {/* CARD 3: LIFETIME PASS */}
@@ -435,28 +486,40 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             </ul>
           </div>
 
-          <button
-            onClick={() => handleTogglePro(true, 'lifetime')}
-            disabled={Boolean(redirectingPlan) || isActivating || (freemiumState.isPro && freemiumState.planType === 'lifetime')}
-            className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all border flex items-center justify-center gap-1.5 touch-manipulation active:scale-[0.98] ${
-              freemiumState.isPro && freemiumState.planType === 'lifetime'
-                ? 'bg-emerald-600 text-white border-emerald-600 cursor-default'
-                : 'border-amber-400/80 bg-amber-50/50 hover:bg-amber-100/70 text-amber-950 shadow-2xs cursor-pointer'
-            }`}
-          >
-            {redirectingPlan === 'lifetime' ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-900" />
-                <span>Opening Checkout...</span>
-              </>
-            ) : (
-              <span>
-                {freemiumState.isPro && freemiumState.planType === 'lifetime'
-                  ? 'Active Lifetime Plan'
-                  : 'Get Lifetime Pass →'}
-              </span>
-            )}
-          </button>
+          {(() => {
+            const isLifetimeActive =
+              freemiumState.isPro && freemiumState.planType === 'lifetime';
+            const isCard3Disabled =
+              Boolean(redirectingPlan) || isActivating || isLifetimeActive;
+
+            let card3ButtonText = 'Get Lifetime Pass →';
+            if (isLifetimeActive) {
+              card3ButtonText = 'Current Plan (Lifetime)';
+            } else if (freemiumState.isPro) {
+              card3ButtonText = 'Upgrade to Lifetime ($149) →';
+            }
+
+            return (
+              <button
+                onClick={() => handleTogglePro(true, 'lifetime')}
+                disabled={isCard3Disabled}
+                className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all border flex items-center justify-center gap-1.5 touch-manipulation active:scale-[0.98] ${
+                  isLifetimeActive
+                    ? 'bg-emerald-600 text-white border-emerald-600 cursor-default'
+                    : 'border-amber-400/80 bg-amber-50/50 hover:bg-amber-100/70 text-amber-950 shadow-2xs cursor-pointer'
+                }`}
+              >
+                {redirectingPlan === 'lifetime' ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-900" />
+                    <span>Opening Checkout...</span>
+                  </>
+                ) : (
+                  <span>{card3ButtonText}</span>
+                )}
+              </button>
+            );
+          })()}
         </div>
       </div>
 

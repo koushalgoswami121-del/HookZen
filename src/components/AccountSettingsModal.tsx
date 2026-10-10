@@ -22,6 +22,7 @@ interface AccountSettingsModalProps {
   freemiumState: FreemiumState;
   onCancelSubscription: () => Promise<void>;
   onDeleteAccount: () => Promise<void>;
+  onOpenPricing?: () => void;
 }
 
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
@@ -31,6 +32,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   freemiumState,
   onCancelSubscription,
   onDeleteAccount,
+  onOpenPricing,
 }) => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -159,6 +161,21 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   >
                     {freemiumState.isPro ? 'Active' : 'Free'}
                   </span>
+                  {onOpenPricing && (
+                    <button
+                      type="button"
+                      onClick={onOpenPricing}
+                      className="block mt-1 text-[11px] font-bold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                    >
+                      {freemiumState.isPro && freemiumState.planType === 'monthly'
+                        ? 'Upgrade to Annual (Save 34%)'
+                        : freemiumState.isPro && freemiumState.planType !== 'lifetime'
+                        ? 'Change Plan'
+                        : !freemiumState.isPro
+                        ? 'Upgrade to Pro'
+                        : null}
+                    </button>
+                  )}
                 </div>
               </div>
 

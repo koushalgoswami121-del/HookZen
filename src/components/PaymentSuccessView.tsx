@@ -37,13 +37,25 @@ export const PaymentSuccessView: React.FC<PaymentSuccessViewProps> = ({
 
     async function syncSubscription() {
       try {
-        // Detect selected plan from URL search parameters or saved pending state
+        // Detect selected plan from URL search parameters, localStorage pending state, or cloud pending plan
         const urlParams = new URLSearchParams(window.location.search);
         const urlPlan = urlParams.get('plan') as 'monthly' | 'annual' | 'lifetime' | null;
         const pendingPlan = localStorage.getItem('pending_plan_type') as 'monthly' | 'annual' | 'lifetime' | null;
 
+        let cloudPendingPlan: 'monthly' | 'annual' | 'lifetime' | null = null;
+        if (user) {
+          try {
+            const cloudProfile = await fetchUserProfileFromFirestore(user.uid);
+            if (cloudProfile?.pendingPlanType) {
+              cloudPendingPlan = cloudProfile.pendingPlanType;
+            }
+          } catch (cloudErr) {
+            console.warn('Could not read cloud profile pending plan:', cloudErr);
+          }
+        }
+
         const plan: 'monthly' | 'annual' | 'lifetime' =
-          urlPlan || pendingPlan || 'annual';
+          urlPlan || pendingPlan || cloudPendingPlan || 'monthly';
 
         // Activate Pro status with exact plan type
         const currentState = getFreemiumState();
@@ -58,12 +70,13 @@ export const PaymentSuccessView: React.FC<PaymentSuccessViewProps> = ({
         saveFreemiumState(updatedState);
         onUpdateFreemiumState(updatedState);
 
-        // Persist to user's Firebase Cloud profile
+        // Persist to user's Firebase Cloud profile & clear pendingPlanType
         if (user) {
           try {
             await saveUserProfileToFirestore(user.uid, {
               isPro: true,
               planType: plan,
+              pendingPlanType: undefined,
               updatedAt: new Date().toISOString(),
             });
           } catch (cloudErr) {

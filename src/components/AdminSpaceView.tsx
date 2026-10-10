@@ -45,7 +45,8 @@ import {
   AlertCircle,
   TrendingUp,
   Layers,
-  Save
+  Save,
+  Filter
 } from 'lucide-react';
 
 interface AdminSpaceViewProps {
@@ -74,6 +75,7 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
   const [usersSearch, setUsersSearch] = useState('');
+  const [userPlanFilter, setUserPlanFilter] = useState<'all' | 'paid' | 'free' | 'monthly' | 'annual' | 'lifetime'>('all');
   const [dirtyUsers, setDirtyUsers] = useState<Set<string>>(new Set());
   const [userSaveSuccess, setUserSaveSuccess] = useState<string | null>(null);
   const [feedbackRatingFilter, setFeedbackRatingFilter] = useState<number | 'all'>('all');
@@ -161,10 +163,24 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
     setDirtyUsers(prev => new Set(prev).add(user.uid!));
   };
 
+  const handleChangeUserPlan = (user: CloudUserProfile, newPlan: 'free' | 'monthly' | 'annual' | 'lifetime') => {
+    if (!user.uid) return;
+    const isPro = newPlan !== 'free';
+    setUsersList(prev => prev.map(u => u.uid === user.uid ? { ...u, isPro, planType: newPlan } : u));
+    setDirtyUsers(prev => new Set(prev).add(user.uid!));
+  };
+
   const handleSaveUser = async (user: CloudUserProfile) => {
     if (!user.uid) return;
     try {
-      await saveUserProfileToFirestore(user.uid, { ...user, bonusCredits: user.bonusCredits });
+      await saveUserProfileToFirestore(user.uid, {
+        isPro: Boolean(user.isPro),
+        planType: user.planType || (user.isPro ? 'monthly' : 'free'),
+        bonusCredits: user.bonusCredits || 0,
+        dailyCreditsUsed: user.dailyCreditsUsed || 0,
+        lastResetDate: user.lastResetDate,
+        updatedAt: new Date().toISOString(),
+      });
       setDirtyUsers(prev => {
         const next = new Set(prev);
         next.delete(user.uid!);
@@ -288,9 +304,44 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
     const totalUsers = usersList.length;
     const proUsers = usersList.filter(u => u.isPro).length;
     const freeUsers = totalUsers - proUsers;
+    const monthlyUsers = usersList.filter(u => u.isPro && (u.planType === 'monthly' || (!u.planType || (u.planType !== 'annual' && u.planType !== 'lifetime')))).length;
+    const annualUsers = usersList.filter(u => u.isPro && u.planType === 'annual').length;
+    const lifetimeUsers = usersList.filter(u => u.isPro && u.planType === 'lifetime').length;
     const totalBonusGiven = usersList.reduce((acc, u) => acc + (u.bonusCredits || 0), 0);
     const totalCreditsUsed = usersList.reduce((acc, u) => acc + (u.dailyCreditsUsed || 0), 0);
-    return { totalUsers, proUsers, freeUsers, totalBonusGiven, totalCreditsUsed };
+    return {
+      totalUsers,
+      proUsers,
+      freeUsers,
+      monthlyUsers,
+      annualUsers,
+      lifetimeUsers,
+      totalBonusGiven,
+      totalCreditsUsed,
+    };
+  }, [usersList]);
+
+  const planCounts = useMemo(() => {
+    let paid = 0;
+    let free = 0;
+    let monthly = 0;
+    let annual = 0;
+    let lifetime = 0;
+
+    usersList.forEach((u) => {
+      const isPaid = Boolean(u.isPro);
+      const plan = u.planType || (isPaid ? 'monthly' : 'free');
+      if (isPaid) {
+        paid++;
+        if (plan === 'annual') annual++;
+        else if (plan === 'lifetime') lifetime++;
+        else monthly++;
+      } else {
+        free++;
+      }
+    });
+
+    return { all: usersList.length, paid, free, monthly, annual, lifetime };
   }, [usersList]);
 
   const feedbackMetrics = useMemo(() => {
@@ -305,13 +356,30 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
   }, [feedbacks, feedbackRatingFilter]);
 
   const filteredUsers = useMemo(() => {
-    if (!usersSearch.trim()) return usersList;
-    const q = usersSearch.toLowerCase();
-    return usersList.filter(u =>
-      u.email?.toLowerCase().includes(q) ||
-      u.uid?.toLowerCase().includes(q)
-    );
-  }, [usersList, usersSearch]);
+    return usersList.filter((u) => {
+      // 1. Text Search Filter
+      if (usersSearch.trim()) {
+        const q = usersSearch.toLowerCase();
+        const matches =
+          u.email?.toLowerCase().includes(q) ||
+          u.uid?.toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+
+      // 2. Plan Filter
+      const isPaid = Boolean(u.isPro);
+      const plan = u.planType || (isPaid ? 'monthly' : 'free');
+
+      if (userPlanFilter === 'all') return true;
+      if (userPlanFilter === 'paid') return isPaid;
+      if (userPlanFilter === 'free') return !isPaid || plan === 'free';
+      if (userPlanFilter === 'monthly') return isPaid && plan === 'monthly';
+      if (userPlanFilter === 'annual') return isPaid && plan === 'annual';
+      if (userPlanFilter === 'lifetime') return isPaid && plan === 'lifetime';
+
+      return true;
+    });
+  }, [usersList, usersSearch, userPlanFilter]);
 
   // ==========================================
   // UN-AUTHENTICATED PASSWORD SCREEN
@@ -587,7 +655,9 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
                     ({userMetrics.totalUsers > 0 ? Math.round((userMetrics.proUsers / userMetrics.totalUsers) * 100) : 0}%)
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Paid subscribers</p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {userMetrics.monthlyUsers} mo • {userMetrics.annualUsers} yr • {userMetrics.lifetimeUsers} life
+                </p>
               </div>
 
               <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
@@ -603,7 +673,44 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
               </div>
             </div>
 
-            {/* User Search & Filters */}
+            {/* Filter Pills Bar */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <span className="text-xs font-bold text-slate-400 flex items-center gap-1 shrink-0 pl-1">
+                <Filter className="h-3.5 w-3.5 text-amber-400" />
+                <span>Filter:</span>
+              </span>
+              {[
+                { id: 'all', label: 'All Accounts', count: planCounts.all },
+                { id: 'paid', label: 'Paid (All Pro)', count: planCounts.paid },
+                { id: 'monthly', label: 'Monthly', count: planCounts.monthly },
+                { id: 'annual', label: 'Annual', count: planCounts.annual },
+                { id: 'lifetime', label: 'Lifetime', count: planCounts.lifetime },
+                { id: 'free', label: 'Free Tier', count: planCounts.free },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setUserPlanFilter(tab.id as any)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    userPlanFilter === tab.id
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                      userPlanFilter === tab.id
+                        ? 'bg-slate-950/20 text-slate-950'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* User Search & Summary */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="relative w-full sm:w-96">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -628,8 +735,8 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
               {filteredUsers.length === 0 ? (
                 <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80">
                   <Users className="h-8 w-8 text-slate-600 mx-auto mb-3" />
-                  <p className="text-sm font-bold text-slate-400">No users match your search.</p>
-                  <p className="text-xs text-slate-500 mt-1">Try searching a different email address or UID.</p>
+                  <p className="text-sm font-bold text-slate-400">No users match your filter or search.</p>
+                  <p className="text-xs text-slate-500 mt-1">Try switching to &quot;All Accounts&quot; or clearing your search query.</p>
                 </div>
               ) : (
                 filteredUsers.map((u) => {
@@ -648,17 +755,11 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
                           {u.isPro ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase">
                               <Crown className="h-3 w-3" />
-                              PRO MEMBER
+                              PRO ({u.planType || 'monthly'})
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold">
                               FREE TIER
-                            </span>
-                          )}
-
-                          {u.planType && u.planType !== 'free' && (
-                            <span className="px-2 py-0.5 rounded-full bg-slate-800/60 text-slate-300 text-[10px] font-mono">
-                              {u.planType}
                             </span>
                           )}
                         </div>
@@ -682,16 +783,36 @@ export const AdminSpaceView: React.FC<AdminSpaceViewProps> = ({ onGoHome, onPost
 
                           {u.lastResetDate && (
                             <span className="text-[11px] text-slate-500">
-                              Active: {u.lastResetDate}
+                              Active Cycle: {u.lastResetDate}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Right: Credit Control Module */}
-                      <div className="flex items-center gap-4 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 shrink-0 self-start lg:self-auto">
+                      {/* Right: Plan Selector & Credit Control Module */}
+                      <div className="flex items-center gap-3 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 shrink-0 self-start lg:self-auto flex-wrap sm:flex-nowrap">
+                        {/* Plan Switcher */}
+                        <div className="text-left px-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Plan
+                          </p>
+                          <select
+                            value={u.isPro ? (u.planType || 'monthly') : 'free'}
+                            onChange={(e) => {
+                              const val = e.target.value as 'free' | 'monthly' | 'annual' | 'lifetime';
+                              handleChangeUserPlan(u, val);
+                            }}
+                            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1 font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            <option value="free">Free Tier</option>
+                            <option value="monthly">Pro Monthly</option>
+                            <option value="annual">Pro Annual</option>
+                            <option value="lifetime">Lifetime Pass</option>
+                          </select>
+                        </div>
+
                         {/* Bonus Credits Adjuster */}
-                        <div className="text-center px-2">
+                        <div className="text-center px-2 border-l border-slate-800">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                             Bonus Credits
                           </p>
